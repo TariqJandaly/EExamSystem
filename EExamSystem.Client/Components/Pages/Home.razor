@@ -1,0 +1,51 @@
+﻿@page "/"
+@inject HttpClient Http
+
+<PageTitle>Home</PageTitle>
+
+<div>
+    <h2 class="text-xl font-bold text-gray-800 mb-2">API Status:</h2>
+    
+    @if (isLoading)
+    {
+        <p class="text-gray-500 animate-pulse">Connecting to backend...</p>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <p class="text-red-600 font-semibold">@errorMessage</p>
+    }
+    else
+    {
+        <p class="text-green-600 font-semibold text-lg">@apiResponse?.Message</p>
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private string? errorMessage;
+    private ApiResponse? apiResponse;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            //TODO: Change later to backend url
+            var apiUrl = "http://localhost:5155/";
+            
+            apiResponse = await Http.GetFromJsonAsync<ApiResponse>(apiUrl);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to connect: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class ApiResponse
+    {
+        public string Message { get; set; } = "";
+    }
+}

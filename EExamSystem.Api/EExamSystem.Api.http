@@ -1,0 +1,6 @@
+@EExamSystem.Api_HostAddress = http://localhost:5155
+
+GET {{EExamSystem.Api_HostAddress}}/
+Accept: application/json
+
+###
