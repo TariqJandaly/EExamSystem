@@ -1,9 +1,13 @@
+using System.Data;
+using System.Text;
 using DotNetEnv;
 using EExamSystem.Api.Data;
 using EExamSystem.Shared.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Microsoft.IdentityModel.Tokens;
 
 Env.Load();
 
@@ -41,13 +45,38 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
+// Get JWT configuration from appsettings file
+var jwtSettings = builder.Configuration.GetSection("JWT");
+var jwtSecretKey = Environment.GetEnvironmentVariable("JWTSecretKey");
+var key = Encoding.UTF8.GetBytes(jwtSecretKey);
+
+// Configure JWT authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    
+
     app.MapScalarApiReference();
 }
 
