@@ -1,5 +1,7 @@
 using DotNetEnv;
 using EExamSystem.Api.Data;
+using EExamSystem.Shared.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -29,6 +31,15 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
+// Configure identity services
+builder.Services.AddIdentity<User, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 8;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
 
 var app = builder.Build();
 
