@@ -4,12 +4,12 @@ namespace EExamSystem.Shared.DTOs.Auth;
 
 public class LoginDto
 {
-    [Required]
-    [EmailAddress]
+    [Required(ErrorMessage = "EmailRequired")]
+    [EmailAddress(ErrorMessage = "EmailInvalidFormat")]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
-    [MinLength(8)]
-    [DataType(DataType.Password)]
+    [Required(ErrorMessage = "PasswordRequired")]
+    [MinLength(8, ErrorMessage = "PasswordTooShort")]
+    [DataType(DataType.Password, ErrorMessage = "PasswordInvalidFormat")]
     public string Password { get; set; } = string.Empty;
 }
