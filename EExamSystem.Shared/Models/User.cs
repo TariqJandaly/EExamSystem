@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace EExamSystem.Shared.Models;
 
@@ -19,6 +20,7 @@ public class User
     /// The BCrypt hashed version of the user's password. Never store plain text.
     /// </summary>
     [Required]
+    [JsonIgnore]
     public string Password { get; set; } = string.Empty;
     
     public UserRole Role { get; set; } = UserRole.Student;
