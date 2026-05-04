@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using EExamSystem.Shared.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace EExamSystem.Api.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User>(options)
 {
-    public DbSet<User> Users { get; set; }
+
     public DbSet<Course> Courses { get; set; }
     public DbSet<Section> Sections { get; set; }
     public DbSet<Testbank> Testbanks { get; set; }
