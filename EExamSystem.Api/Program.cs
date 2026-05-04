@@ -1,4 +1,16 @@
+using DotNetEnv;
+using EExamSystem.Api.Data;
+using Microsoft.EntityFrameworkCore;
+
+Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    var connString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+    options.UseNpgsql(connString);
+});
 
 // Add services to the container.
 

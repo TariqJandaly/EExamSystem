@@ -1,0 +1,32 @@
+using Microsoft.EntityFrameworkCore;
+using EExamSystem.Shared.Models;
+
+namespace EExamSystem.Api.Data;
+
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+    public DbSet<User> Users { get; set; }
+    public DbSet<Course> Courses { get; set; }
+    public DbSet<Section> Sections { get; set; }
+    public DbSet<Testbank> Testbanks { get; set; }
+    public DbSet<TestbankChapter> TestbankChapters { get; set; }
+    public DbSet<Question> Questions { get; set; }
+    public DbSet<Exam> Exams { get; set; }
+    public DbSet<StudentExamSession> ExamSessions { get; set; }
+    public DbSet<StudentAnswer> StudentAnswers { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
+        
+        modelBuilder.Entity<User>()
+            .Property(u => u.Role)
+            .HasConversion<string>();
+    }
+}
