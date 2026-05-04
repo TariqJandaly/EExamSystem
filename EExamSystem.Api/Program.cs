@@ -1,6 +1,7 @@
 using DotNetEnv;
 using EExamSystem.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 Env.Load();
 
@@ -35,6 +36,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();

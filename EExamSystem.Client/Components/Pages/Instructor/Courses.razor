@@ -1,0 +1,46 @@
+@page "/instructor"
+@inject LanguageService Lang
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@Lang.T("instructor.title")</PageTitle>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-primary">@Lang.T("instructor.title")</h1>
+        <p class="text-secondary mt-1">@Lang.T("instructor.subtitle")</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @foreach (var course in courses)
+        {
+            <a href="/instructor/@course.Id/banks"
+               class="block bg-white border border-brand-4 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-primary-light transition-all group">
+                <h2 class="font-semibold text-foreground text-base mb-1">@course.Name</h2>
+                <p class="text-xs text-secondary mb-4">@course.Code</p>
+                <div class="flex items-center justify-between text-xs text-secondary">
+                    <span>@course.Banks question banks</span>
+                    <span>@course.Students students</span>
+                </div>
+            </a>
+        }
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized() => Lang.OnChange += Refresh;
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Lang.OnChange -= Refresh;
+
+    private record Course(string Id, string Name, string Code, int Banks, int Students);
+
+    private List<Course> courses = new()
+    {
+        new("cs301", "Algorithms", "CS301 - Algorithms", 4, 120),
+        new("cs201", "Data Structures", "CS201 - Data Structures", 3, 98),
+        new("cs101", "Intro to CS", "CS101 - Intro to CS", 2, 210),
+        new("math201", "Calculus II", "MATH201 - Calculus", 5, 145),
+        new("cs401", "Operating Systems", "CS401 - OS", 3, 76),
+    };
+}

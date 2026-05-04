@@ -1,0 +1,133 @@
+@page "/instructor/{CourseId}/banks/{BankId}"
+
+<PageTitle>Bank Editor</PageTitle>
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+
+    <div class="flex items-center gap-2 text-sm text-secondary mb-6">
+        <a href="/instructor" class="hover:text-primary transition-colors">My Courses</a>
+        <span>/</span>
+        <a href="/instructor/@CourseId/banks" class="hover:text-primary transition-colors">@CourseId.ToUpper()</a>
+        <span>/</span>
+        <span class="text-foreground font-medium">@BankId</span>
+    </div>
+
+    <div class="flex items-start justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-primary">Chapter 2 — Sorting & Searching</h1>
+            <p class="text-secondary mt-1">@questions.Count questions in this bank</p>
+        </div>
+        <button @onclick="() => showForm = !showForm"
+                class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors">
+            + Add Question
+        </button>
+    </div>
+
+    @if (showForm)
+    {
+        <div class="bg-white border border-primary rounded-2xl p-6 shadow-sm mb-6">
+            <h3 class="font-semibold text-foreground mb-4">New Question</h3>
+
+            <div class="mb-4">
+                <label class="block text-xs font-medium text-secondary mb-1">Question Text</label>
+                <textarea @bind="newQuestion.Text" rows="2" placeholder="Enter the question..."
+                          class="w-full px-4 py-2 rounded-lg border border-brand-4 bg-brand-5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm resize-none" />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                @for (int i = 0; i < 4; i++)
+                {
+                    var idx = i;
+                    <div>
+                        <label class="block text-xs font-medium text-secondary mb-1">Option @((char)('A' + idx))</label>
+                        <input @bind="newQuestion.Options[idx]" placeholder="Option @((char)('A' + idx))"
+                               class="w-full px-3 py-2 rounded-lg border border-brand-4 bg-brand-5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
+                    </div>
+                }
+            </div>
+
+            <div class="mb-5">
+                <label class="block text-xs font-medium text-secondary mb-1">Correct Answer</label>
+                <select @bind="newQuestion.CorrectIndex"
+                        class="px-3 py-2 rounded-lg border border-brand-4 bg-brand-5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm">
+                    <option value="0">A</option>
+                    <option value="1">B</option>
+                    <option value="2">C</option>
+                    <option value="3">D</option>
+                </select>
+            </div>
+
+            <div class="flex gap-3">
+                <button @onclick="AddQuestion"
+                        class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors">
+                    Save Question
+                </button>
+                <button @onclick="() => showForm = false"
+                        class="px-4 py-2 rounded-lg border border-brand-4 text-sm text-secondary hover:bg-brand-5 transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    }
+
+    <div class="flex flex-col gap-4">
+        @for (int i = 0; i < questions.Count; i++)
+        {
+            var q = questions[i];
+            var num = i + 1;
+            <div class="bg-white border border-brand-4 rounded-2xl p-6 shadow-sm">
+                <div class="flex items-start justify-between mb-3">
+                    <p class="font-medium text-foreground"><span class="text-secondary font-normal mr-2">Q@(num).</span>@q.Text</p>
+                    <button class="text-xs text-red-400 hover:text-red-600 transition-colors ml-4 shrink-0">Remove</button>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    @for (int j = 0; j < q.Options.Length; j++)
+                    {
+                        var opt = q.Options[j];
+                        var isCorrect = j == q.CorrectIndex;
+                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg @(isCorrect ? "bg-brand-4 text-primary font-medium" : "bg-brand-5 text-secondary") text-sm">
+                            <span class="font-bold">@((char)('A' + j)).</span> @opt
+                            @if (isCorrect) { <span class="ml-auto text-xs">✓</span> }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string CourseId { get; set; } = "";
+    [Parameter] public string BankId { get; set; } = "";
+
+    private bool showForm = false;
+
+    private class QuestionForm
+    {
+        public string Text { get; set; } = "";
+        public string[] Options { get; set; } = new string[4];
+        public int CorrectIndex { get; set; } = 0;
+    }
+
+    private QuestionForm newQuestion = new() { Options = new string[4] };
+
+    private record Question(string Text, string[] Options, int CorrectIndex);
+
+    private List<Question> questions = new()
+    {
+        new("What is the average time complexity of quicksort?",
+            new[] { "O(n²)", "O(n log n)", "O(n)", "O(log n)" }, 1),
+        new("Which sorting algorithm is stable by default?",
+            new[] { "Quick Sort", "Heap Sort", "Merge Sort", "Selection Sort" }, 2),
+        new("Binary search requires the array to be:",
+            new[] { "Unsorted", "Sorted", "Balanced", "Indexed" }, 1),
+    };
+
+    private void AddQuestion()
+    {
+        if (string.IsNullOrWhiteSpace(newQuestion.Text)) return;
+        questions.Add(new(newQuestion.Text, (string[])newQuestion.Options.Clone(), newQuestion.CorrectIndex));
+        newQuestion = new() { Options = new string[4] };
+        showForm = false;
+    }
+}
