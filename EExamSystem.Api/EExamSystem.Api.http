@@ -1,6 +1,9 @@
-@EExamSystem.Api_HostAddress = http://localhost:5155
+@HostAddress = http://localhost:5155
 
-GET {{EExamSystem.Api_HostAddress}}/
+GET {{HostAddress}}
 Accept: application/json
+###
 
+GET {{HostAddress}}/api/v1/courses
+Accept: application/json
 ###

@@ -11,7 +11,15 @@ public class StudentExamSession
     public User? Student { get; set; }
     
     public DateTime StartedAt { get; set; }
+
+    /// <summary>
+    /// Will remain null until the student explicitly submits the exam or time expires.
+    /// </summary>
     public DateTime? CompletedAt { get; set; }
+
+    /// <summary>
+    /// Will remain null until the session is completed and graded.
+    /// </summary>
     public decimal? FinalScore { get; set; }
     
     public List<StudentAnswer> Answers { get; set; } = new();
