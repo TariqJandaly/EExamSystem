@@ -1,0 +1,88 @@
+@page "/instructor/{CourseId}/banks"
+@inject LanguageService Lang
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@Lang.T("banks.title")</PageTitle>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+    <div class="flex items-center gap-2 text-sm text-secondary mb-6">
+        <a href="/instructor" class="hover:text-primary transition-colors">@Lang.T("instructor.title")</a>
+        <span>/</span>
+        <span class="text-foreground font-medium">@CourseId.ToUpper()</span>
+    </div>
+
+    <div class="flex items-start justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-primary">@Lang.T("banks.title")</h1>
+            <p class="text-secondary mt-1">@CourseId.ToUpper()</p>
+        </div>
+        <button @onclick="() => showNewBank = true"
+                class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors">
+            @Lang.T("banks.new")
+        </button>
+    </div>
+
+    @if (showNewBank)
+    {
+        <div class="bg-white border border-primary rounded-2xl p-6 shadow-sm mb-6">
+            <h3 class="font-semibold text-foreground mb-4">@Lang.T("banks.create")</h3>
+            <div class="flex gap-3">
+                <input @bind="newBankName" placeholder="@Lang.T("banks.ph")"
+                       class="flex-1 px-4 py-2 rounded-lg border border-brand-4 bg-brand-5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
+                <button @onclick="AddBank"
+                        class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors">
+                    @Lang.T("banks.btn.create")
+                </button>
+                <button @onclick="() => showNewBank = false"
+                        class="px-4 py-2 rounded-lg border border-brand-4 text-sm text-secondary hover:bg-brand-5 transition-colors">
+                    @Lang.T("banks.btn.cancel")
+                </button>
+            </div>
+        </div>
+    }
+
+    <div class="flex flex-col gap-3">
+        @foreach (var bank in banks)
+        {
+            <a href="/instructor/@CourseId/banks/@bank.Id"
+               class="flex items-center justify-between bg-white border border-brand-4 rounded-2xl px-6 py-4 shadow-sm hover:shadow-md hover:border-primary-light transition-all group">
+                <div>
+                    <h2 class="font-semibold text-foreground group-hover:text-primary transition-colors">@bank.Name</h2>
+                    <p class="text-xs text-secondary mt-0.5">@bank.QuestionCount questions</p>
+                </div>
+                <span class="text-secondary group-hover:text-primary transition-colors text-lg">→</span>
+            </a>
+        }
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized() => Lang.OnChange += Refresh;
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Lang.OnChange -= Refresh;
+
+    [Parameter] public string CourseId { get; set; } = "";
+
+    private bool showNewBank = false;
+    private string newBankName = "";
+
+    private record Bank(string Id, string Name, int QuestionCount);
+
+    private List<Bank> banks = new()
+    {
+        new("bank1", "Chapter 1 — Introduction to Algorithms", 20),
+        new("bank2", "Chapter 2 — Sorting & Searching", 35),
+        new("bank3", "Chapter 3 — Graph Algorithms", 28),
+        new("bank4", "Final Exam Pool", 60),
+    };
+
+    private void AddBank()
+    {
+        if (string.IsNullOrWhiteSpace(newBankName)) return;
+        banks.Add(new($"bank{banks.Count + 1}", newBankName, 0));
+        newBankName = "";
+        showNewBank = false;
+    }
+}

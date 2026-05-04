@@ -2,9 +2,9 @@
 @inject LanguageService Lang
 @implements IDisposable
 
-<div class="page w-full min-h-screen" dir="@(Lang.IsRtl ? "rtl" : "ltr")">
-    <Navbar />
-    <main>
+<div class="w-full min-h-screen flex flex-col bg-background" dir="@(Lang.IsRtl ? "rtl" : "ltr")">
+    <GuestNavbar />
+    <main class="flex-1">
         <article class="p-4">
             @Body
         </article>

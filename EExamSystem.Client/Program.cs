@@ -1,4 +1,5 @@
 using EExamSystem.Client.Components;
+using EExamSystem.Client.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<LanguageService>();
 
 var app = builder.Build();
 

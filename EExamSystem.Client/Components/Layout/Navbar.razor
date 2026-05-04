@@ -1,0 +1,49 @@
+@inject LanguageService Lang
+@implements IDisposable
+@rendermode InteractiveServer
+
+<nav class="w-full bg-primary text-primary-foreground px-6 py-4 flex items-center justify-between shadow-md">
+    <a href="/" class="flex items-center gap-2">
+        <img src="/KAU_logo.png" alt="KAU Logo" class="h-10 w-auto" />
+    </a>
+
+    <div class="flex items-center gap-6 text-sm font-medium">
+        <NavLink href="/login"
+                 class="hover:opacity-75 transition-opacity"
+                 ActiveClass="underline underline-offset-4">
+            @Lang.T("nav.login")
+        </NavLink>
+        <NavLink href="/exams"
+                 class="hover:opacity-75 transition-opacity"
+                 ActiveClass="underline underline-offset-4">
+            @Lang.T("nav.exams")
+        </NavLink>
+        <NavLink href="/instructor"
+                 class="hover:opacity-75 transition-opacity"
+                 ActiveClass="underline underline-offset-4">
+            @Lang.T("nav.instructor")
+        </NavLink>
+        <NavLink href="/admin"
+                 class="hover:opacity-75 transition-opacity"
+                 ActiveClass="underline underline-offset-4">
+            @Lang.T("nav.admin")
+        </NavLink>
+
+        <div class="flex items-center gap-1 border border-primary-foreground/30 rounded-full p-0.5 text-xs">
+            <button @onclick='() => Lang.SetLanguage("en")'
+                    class="px-2.5 py-1 rounded-full transition-colors @(Lang.Current == "en" ? "bg-primary-foreground text-primary font-semibold" : "hover:bg-primary-foreground/10")">
+                EN
+            </button>
+            <button @onclick='() => Lang.SetLanguage("ar")'
+                    class="px-2.5 py-1 rounded-full transition-colors @(Lang.Current == "ar" ? "bg-primary-foreground text-primary font-semibold" : "hover:bg-primary-foreground/10")">
+                AR
+            </button>
+        </div>
+    </div>
+</nav>
+
+@code {
+    protected override void OnInitialized() => Lang.OnChange += Refresh;
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Lang.OnChange -= Refresh;
+}
