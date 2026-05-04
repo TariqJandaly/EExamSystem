@@ -1,4 +1,17 @@
+using DotNetEnv;
+using EExamSystem.Api.Data;
+using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
+
+Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    var connString = Environment.GetEnvironmentVariable("CONNECTION_STRING");
+    options.UseNpgsql(connString);
+});
 
 // Add services to the container.
 
@@ -23,6 +36,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();

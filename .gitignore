@@ -8,3 +8,4 @@ node_modules
 .idea
 .env
 app.min.css
+Migrations

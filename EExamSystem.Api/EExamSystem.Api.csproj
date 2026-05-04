@@ -1,13 +1,30 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-    </PropertyGroup>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+      <UserSecretsId>788cf0a5-435a-4259-9e03-50682bb69561</UserSecretsId>
+  </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7"/>
+        <PackageReference Include="DotNetEnv" Version="3.2.0" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.7">
+          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+          <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+        <PackageReference Include="Scalar.AspNetCore" Version="2.14.9" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\EExamSystem.Shared\EExamSystem.Shared.csproj" />
     </ItemGroup>
 
 </Project>
