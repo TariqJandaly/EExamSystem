@@ -1,4 +1,4 @@
-namespace EExamSystem.Shared.DTOs;
+namespace EExamSystem.Shared.DTOs.Courses;
 
 public class CourseDto
 {
