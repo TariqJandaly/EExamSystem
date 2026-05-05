@@ -15,6 +15,15 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    /// <summary>
+    /// Registers a new user with the provided registration details.
+    /// </summary>
+    /// <param name="registerDto">
+    /// The DTO containing the registration details.
+    /// </param>
+    /// <returns>Auth data if successful, error message otherwise.</returns>
+    /// <response code="200">Returns the authentication data if registration is successful.</response>
+    /// <response code="400">Returns an error message.</response>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
@@ -26,6 +35,18 @@ public class AuthController : ControllerBase
         return BadRequest(result.Message); // Status 400
     }
 
+
+    /// <summary>
+    /// Authenticates a user with the provided login credentials and returns an authentication token if successful.
+    /// </summary>
+    /// <param name="loginDto">
+    /// The DTO containing the login credentials.
+    /// </param>
+    /// <returns>
+    /// The authentication response containing the token if successful, or an error message otherwise.
+    /// </returns>
+    /// <response code="200">Returns the authentication data if login is successful.</response>
+    /// <response code="401">Returns an error message if authentication fails.</response>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
