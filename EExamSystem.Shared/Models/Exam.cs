@@ -10,17 +10,18 @@ public class Exam
     [MaxLength(200)]
     public string Title { get; set; } = string.Empty;
     
-    /// <summary>
-    /// The exact UTC time the exam becomes available to students.
-    /// </summary>
     public DateTime StartTime { get; set; }
     
     public DateTime EndTime { get; set; }
 
-    /// <summary>
-    /// The total time allowed for the exam in minutes. A value of 0 indicates an untimed exam.
-    /// </summary>
     public int DurationMinutes { get; set; }
+
+    [Required]
+    [Range(1, 1000)]
+    public int MaxScore { get; set; } 
+
+    [Required]
+    public int PassingScore { get; set; } 
     
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
