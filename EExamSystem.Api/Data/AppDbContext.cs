@@ -1,11 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using EExamSystem.Shared.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace EExamSystem.Api.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User>(options)
 {
-    public DbSet<User> Users { get; set; }
+
     public DbSet<Course> Courses { get; set; }
     public DbSet<Section> Sections { get; set; }
     public DbSet<Testbank> Testbanks { get; set; }
@@ -19,13 +21,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();
-        
-        modelBuilder.Entity<User>()
-            .Property(u => u.Role)
-            .HasConversion<string>();
+
+        // modelBuilder.Entity<User>()
+        //     .Property(u => u.Role)
+        //     .HasConversion<string>();
     }
 }
