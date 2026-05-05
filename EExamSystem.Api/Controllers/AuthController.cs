@@ -32,7 +32,7 @@ public class AuthController : ControllerBase
         if (result.IsSuccess)
             return Ok(result); // Status 200 with auth data
 
-        return BadRequest(result.Message); // Status 400
+        return BadRequest(result); // Status 400
     }
 
 
@@ -55,6 +55,6 @@ public class AuthController : ControllerBase
         if (result.IsSuccess)
             return Ok(result); // Status 200 with auth data
 
-        return Unauthorized(result.Message); // Status 401
+        return Unauthorized(result); // Status 401
     }
 }
