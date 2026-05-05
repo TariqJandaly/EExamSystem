@@ -1,0 +1,55 @@
+@page "/exams"
+@inject LanguageService Lang
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@Lang.T("exams.title")</PageTitle>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-primary mb-3">@Lang.T("exams.title")</h1>
+        <p class="text-secondary mt-1">@Lang.T("exams.subtitle")</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @foreach (var exam in exams)
+        {
+            <div class="bg-white border border-brand-4 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <h2 class="font-semibold text-foreground text-lg">@exam.Title</h2>
+                        <p class="text-sm text-secondary">@exam.Course</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 text-sm text-secondary mt-4">
+                    <span>@exam.Duration min</span>
+                    <span>@exam.Date</span>
+                    <span>@exam.Questions questions</span>
+                </div>
+                @if (exam.Status == "Available")
+                {
+                    <a href="/exams/@exam.Id"
+                       class="mt-4 block text-center py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-light transition-colors">
+                        @Lang.T("exams.start")
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private record ExamItem(string Id, string Title, string Course, string Status, int Duration, string Date, int Questions);
+
+    private List<ExamItem> exams = new()
+    {
+        new("1", "Midterm Exam", "CS301 - Algorithms", "Available", 90, "Today, 2:00 PM", 40),
+        new("2", "Quiz 3", "MATH201 - Calculus", "Available", 30, "Today, 4:00 PM", 15),
+    };
+
+
+    protected override void OnInitialized() => Lang.OnChange += Refresh;
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Lang.OnChange -= Refresh;
+}

@@ -1,0 +1,121 @@
+@page "/admin"
+@inject LanguageService Lang
+@implements IDisposable
+@rendermode InteractiveServer
+
+<PageTitle>@Lang.T("admin.title")</PageTitle>
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-primary">@Lang.T("admin.title")</h1>
+        <p class="text-secondary mt-1">@Lang.T("admin.subtitle")</p>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        @foreach (var stat in stats)
+        {
+            <div class="bg-white border border-brand-4 rounded-2xl p-5 shadow-sm">
+                <p class="text-xs font-medium text-secondary uppercase tracking-wide mb-1">@stat.Label</p>
+                <p class="text-3xl font-bold text-primary">@stat.Value</p>
+                <p class="text-xs text-secondary mt-1">@stat.Sub</p>
+            </div>
+        }
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+
+        <div class="bg-white border border-brand-4 rounded-2xl p-6 shadow-sm">
+            <h2 class="font-semibold text-foreground mb-4">Active Exams</h2>
+            <div class="flex flex-col gap-3">
+                @foreach (var exam in activeExams)
+                {
+                    <div class="flex items-center justify-between py-2 border-b border-brand-5 last:border-0">
+                        <div>
+                            <p class="text-sm font-medium text-foreground">@exam.Title</p>
+                            <p class="text-xs text-secondary">@exam.Course</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-primary">@exam.Online online</p>
+                            <p class="text-xs text-secondary">ends @exam.Ends</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="bg-white border border-brand-4 rounded-2xl p-6 shadow-sm">
+            <h2 class="font-semibold text-foreground mb-4">Recent Users</h2>
+            <div class="flex flex-col gap-3">
+                @foreach (var user in recentUsers)
+                {
+                    <div class="flex items-center justify-between py-2 border-b border-brand-5 last:border-0">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-brand-4 flex items-center justify-center text-primary font-bold text-sm">
+                                @user.Name[0]
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-foreground">@user.Name</p>
+                                <p class="text-xs text-secondary">@user.Email</p>
+                            </div>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded-full @RoleBadge(user.Role)">@user.Role</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+@code {
+    protected override void OnInitialized() => Lang.OnChange += Refresh;
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Lang.OnChange -= Refresh;
+
+    private record Stat(string Label, string Value, string Sub);
+    private record ActiveExam(string Title, string Course, int Online, string Ends);
+    private record RecentUser(string Name, string Email, string Role);
+    private record UserRow(string Name, string Email, string Role, bool Active);
+
+    private List<Stat> stats = new()
+    {
+        new("Total Exams Taken", "1,284", "+12 this week"),
+        new("Instructors", "48", "across 6 departments"),
+        new("Active Exams", "7", "right now"),
+        new("Courses", "93", "this semester"),
+    };
+
+    private List<ActiveExam> activeExams = new()
+    {
+        new("Midterm Exam", "CS301 - Algorithms", 34, "3:30 PM"),
+        new("Quiz 3", "MATH201 - Calculus", 61, "4:00 PM"),
+        new("Lab Practical", "CS101 - Intro to CS", 22, "5:00 PM"),
+    };
+
+    private List<RecentUser> recentUsers = new()
+    {
+        new("Ali Hassan", "ali.h@uni.edu", "Student"),
+        new("Dr. Sara Malik", "s.malik@uni.edu", "Instructor"),
+        new("Omar Khalid", "o.khalid@uni.edu", "Student"),
+        new("Admin User", "admin@uni.edu", "Admin"),
+    };
+
+    private List<UserRow> allUsers = new()
+    {
+        new("Ali Hassan", "ali.h@uni.edu", "Student", true),
+        new("Dr. Sara Malik", "s.malik@uni.edu", "Instructor", true),
+        new("Omar Khalid", "o.khalid@uni.edu", "Student", true),
+        new("Nora Ahmed", "n.ahmed@uni.edu", "Student", false),
+        new("Dr. Faisal Al-Amin", "f.alamin@uni.edu", "Instructor", true),
+        new("Admin User", "admin@uni.edu", "Admin", true),
+    };
+
+    private string RoleBadge(string role) => role switch
+    {
+        "Admin"      => "bg-brand-s1 text-white",
+        "Instructor" => "bg-secondary text-white",
+        "Student"    => "bg-brand-4 text-foreground",
+        _            => ""
+    };
+}

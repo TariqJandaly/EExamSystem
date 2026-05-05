@@ -1,10 +1,10 @@
-﻿@page "/"
+﻿@page "/dev/api-status"
 @inject HttpClient Http
 
 <PageTitle>Home</PageTitle>
 
 <div>
-    <h2 class="text-xl font-bold text-gray-800 mb-2">API Status:</h2>
+    <h2 class="text-xl font-bold mb-2">API Status:</h2>
     
     @if (isLoading)
     {
@@ -12,7 +12,7 @@
     }
     else if (!string.IsNullOrEmpty(errorMessage))
     {
-        <p class="text-red-600 font-semibold">@errorMessage</p>
+        <p class="text-red-600 font-semibold"> @errorMessage</p>
     }
     else
     {

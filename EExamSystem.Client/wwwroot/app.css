@@ -1,3 +1,59 @@
 @import "tailwindcss";
 
 @source "../Components";
+
+@font-face {
+    font-family: 'YearOfTheCamel';
+    src: url('/TheYearofTheCamel-Bold.otf') format('opentype');
+    font-weight: 100 700;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'YearOfTheCamel';
+    src: url('/TheYearofTheCamel-ExtraBold.otf') format('opentype');
+    font-weight: 800 900;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Alexandria';
+    src: url('/Alexandria-Bold-BF6690948c16117.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+}
+
+@theme {
+    --font-sans: 'Alexandria', ui-sans-serif, system-ui, sans-serif;
+    --font-camel: 'YearOfTheCamel', ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme {
+    /* Unis Primary Brand Colors */
+    --color-brand-1: #055934;
+    --color-brand-2: #208D44;
+    --color-brand-3: #86C242;
+    --color-brand-4: #D3E6BE;
+    --color-brand-5: #F0EEE9;
+
+    /* Unis Secondary Brand Colors */
+    --color-brand-s1: #0A353E;
+    --color-brand-s2: #2BB673;
+    --color-brand-s3: #A7E0C5;
+    --color-brand-s4: #EFF8F5;
+
+    /* Semantic aliases */
+    --color-primary: #055934;
+    --color-primary-light: #208D44;
+    --color-primary-foreground: #ffffff;
+
+    --color-secondary: #0A353E;
+    --color-secondary-light: #2BB673;
+    --color-secondary-foreground: #ffffff;
+
+    --color-background: #F0EEE9;
+    --color-foreground: #055934;
+
+    --color-muted: #86C242;
+    --color-muted-foreground: #D3E6BE;
+}
