@@ -35,6 +35,32 @@ public class QuestionsController(AppDbContext context) : ControllerBase
         return Ok(questions);
     }
     
+    [HttpPost("chapters/{testbankChapterId}/questions")]
+    public async Task<IActionResult> CreateQuestion(int testbankChapterId, [FromBody] QuestionCreateDto newQuestion)
+    {
+        var chapterExists = await context.TestbankChapters.AnyAsync(c => c.Id == testbankChapterId);
+        if (!chapterExists) return NotFound($"Chapter {testbankChapterId} not found.");
+
+        var question = new Question
+        {
+            TestbankChapterId = testbankChapterId,
+            Content = newQuestion.Content,
+            Points = newQuestion.Points,
+            
+            Options = newQuestion.Options.Select(o => new QuestionOption
+            {
+                Text = o.Text,
+                IsCorrect = o.IsCorrect
+            }).ToList()
+        };
+
+        context.Questions.Add(question);
+        
+        await context.SaveChangesAsync(); 
+
+        return Created($"/api/v1/questions/{question.Id}", new { Message = "Question created." });
+    }
+    
     [HttpGet("questions/{id}")]
     public async Task<IActionResult> GetQuestion(int id)
     {
