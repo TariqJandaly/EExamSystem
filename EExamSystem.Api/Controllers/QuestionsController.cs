@@ -89,7 +89,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             }).ToList()
         };
 
-        return Created($"/api/v1/questions/{question.Id}", createdDto);
+        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, createdDto);
     }
     
     /// <summary>

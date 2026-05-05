@@ -87,7 +87,11 @@ public class CoursesController(AppDbContext context) : ControllerBase
             Name = course.Name
         };
 
-        return Created($"/api/v1/courses/{createdCourseDto.Id}", createdCourseDto);
+        return CreatedAtAction(
+            nameof(GetCourse),
+            new { courseId = createdCourseDto.Id },
+            createdCourseDto
+        );
     }
 
     /// <summary>
@@ -99,20 +103,14 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <response code="400">If the ID in the URL does not match the ID in the body.</response>
     /// <response code="404">If the course does not exist.</response>
     [HttpPut("{courseId}")]
-    public async Task<ActionResult> UpdateCourse(int courseId, CourseDto updatedCourse)
+    public async Task<ActionResult> UpdateCourse(int courseId, [FromBody] CreateCourseDto updatedCourse)
     {
-        if (courseId != updatedCourse.Id)
-        {
-            return BadRequest("The Course ID in the URL must match the ID in the request body.");
-        }
-
         var existingCourse = await context.Courses.FindAsync(courseId);
         
         if (existingCourse == null)
         {
             return NotFound($"Course with ID {courseId} was not found.");
         }
-
         existingCourse.Code = updatedCourse.Code;
         existingCourse.Name = updatedCourse.Name;
 
