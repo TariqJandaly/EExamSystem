@@ -21,9 +21,12 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     /// <param name="testbankId">The ID of the parent testbank.</param>
     /// <returns>A list of ChapterDto objects.</returns>
     /// <response code="200">Returns the list of chapters successfully.</response>
+    /// <response code="404">If the specified testbank does not exist.</response>
     [HttpGet("testbanks/{testbankId}/chapters")]
     public async Task<IActionResult> GetChaptersForTestbank(int testbankId)
     {
+        var testbankExists = await context.Testbanks.AnyAsync(t => t.Id == testbankId);
+        if (!testbankExists) return NotFound($"Testbank with ID {testbankId} was not found.");
         var chapters = await context.TestbankChapters
             .Where(c => c.TestbankId == testbankId)
             .Select(c => new ChapterDto
@@ -32,7 +35,6 @@ public class ChaptersController(AppDbContext context) : ControllerBase
                 Name = c.Name
             })
             .ToListAsync();
-
         return Ok(chapters);
     }
 
