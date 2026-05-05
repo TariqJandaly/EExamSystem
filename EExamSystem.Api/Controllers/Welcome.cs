@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EExamSystem.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("/")]
 public class WelcomeController : ControllerBase

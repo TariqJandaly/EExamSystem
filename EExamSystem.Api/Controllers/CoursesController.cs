@@ -3,12 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using EExamSystem.Api.Data;
 using EExamSystem.Shared.DTOs.Courses;
 using EExamSystem.Shared.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EExamSystem.Api.Controllers;
 
 /// <summary>
 /// Manages the creation, retrieval, updating, and deletion of university courses.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
 public class CoursesController(AppDbContext context) : ControllerBase
@@ -68,6 +70,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <returns>The newly created CourseDto.</returns>
     /// <response code="201">Returns the newly created course successfully.</response>
     /// <response code="400">If the provided data is invalid.</response>
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> CreateCourse([FromBody] CreateCourseDto newCourse)
     {
@@ -102,6 +105,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <response code="204">Successfully updated the course.</response>
     /// <response code="400">If the ID in the URL does not match the ID in the body.</response>
     /// <response code="404">If the course does not exist.</response>
+    [Authorize(Roles = "Admin")]
     [HttpPut("{courseId}")]
     public async Task<ActionResult> UpdateCourse(int courseId, [FromBody] CreateCourseDto updatedCourse)
     {
@@ -125,6 +129,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <param name="courseId">The ID of the course to delete.</param>
     /// <response code="204">Successfully deleted the course.</response>
     /// <response code="404">If the course does not exist.</response>
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{courseId}")]
     public async Task<ActionResult> DeleteCourse(int courseId)
     {
