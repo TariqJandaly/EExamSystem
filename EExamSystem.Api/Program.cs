@@ -48,6 +48,13 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 // Get JWT configuration from appsettings file
 var jwtSettings = builder.Configuration.GetSection("JWT");
 var jwtSecretKey = Environment.GetEnvironmentVariable("JWTSecretKey");
+
+// Check if Secret Key is not configured
+if (string.IsNullOrEmpty(jwtSecretKey))
+{
+    throw new InvalidOperationException("JWT Secret Key is not configured in Environment Variables.");
+}
+
 var key = Encoding.UTF8.GetBytes(jwtSecretKey);
 
 // Configure JWT authentication
@@ -84,6 +91,10 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowBlazorClient");
 
+// To identify user
+app.UseAuthentication();
+
+// To check user's permissions
 app.UseAuthorization();
 
 app.MapControllers();
