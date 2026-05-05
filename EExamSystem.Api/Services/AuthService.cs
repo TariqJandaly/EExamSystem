@@ -4,6 +4,7 @@ using EExamSystem.Shared.Models;
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using Superpower.Model;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -12,11 +13,13 @@ public class AuthService : IAuthService
 {
     private readonly UserManager<User> _userManager;
     private readonly IConfiguration _configuration;
+    private readonly SignInManager<User> _signInManager;
 
-    public AuthService(UserManager<User> userManager, IConfiguration configuration)
+    public AuthService(UserManager<User> userManager, IConfiguration configuration, SignInManager<User> signInManager)
     {
         _userManager = userManager;
         _configuration = configuration;
+        _signInManager = signInManager;
     }
 
     /// <summary>
@@ -24,10 +27,10 @@ public class AuthService : IAuthService
     /// </summary>
     /// <param name="user">The user for whom to generate the token.</param>
     /// <returns>A tuple containing the generated token and its expiration time.</returns>
-    private (string Token, DateTime Expiry) GenerateJwtToken(User user)
+    private async Task<(string Token, DateTime Expiry)> GenerateJwtToken(User user)
     {
         // get user roles
-        var userRoles = _userManager.GetRolesAsync(user).Result;
+        var userRoles = await _userManager.GetRolesAsync(user);
 
         // Prepare User informations that will be into the token
         var claims = new List<Claim>
@@ -78,6 +81,7 @@ public class AuthService : IAuthService
             UserName = registerDto.Email // UserName is required
         };
 
+
         // Try to create user
         var result = await _userManager.CreateAsync(user, registerDto.Password);
 
@@ -92,8 +96,11 @@ public class AuthService : IAuthService
             };
         }
 
+        // add default role
+        await _userManager.AddToRoleAsync(user, "User");
+
         // Generate token and return
-        var generatedToken = GenerateJwtToken(user);
+        var generatedToken = await GenerateJwtToken(user);
         return new AuthResponseDto
         {
             IsSuccess = true,
@@ -113,8 +120,28 @@ public class AuthService : IAuthService
         // Search for User with email
         var user = await _userManager.FindByEmailAsync(loginDto.Email);
 
+        if (user == null)
+        {
+            return new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = "EmailOrPasswordIncorrect"
+            };
+        }
+
+        var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, true);
+
+        if (result.IsLockedOut)
+        {
+            return new AuthResponseDto
+            {
+                IsSuccess = false,
+                Message = "UserLockedOut"
+            };
+        }
+
         // Check if user not exists or password is incorrect
-        if (user == null || !await _userManager.CheckPasswordAsync(user, loginDto.Password))
+        if (!result.Succeeded)
         {
             return new AuthResponseDto
             {
@@ -124,7 +151,7 @@ public class AuthService : IAuthService
         }
 
         // Generate token and return
-        var generatedToken = GenerateJwtToken(user);
+        var generatedToken = await GenerateJwtToken(user);
         return new AuthResponseDto
         {
             IsSuccess = true,
