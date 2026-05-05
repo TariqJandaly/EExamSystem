@@ -1,6 +1,7 @@
 using EExamSystem.Api.Data;
 using EExamSystem.Shared.DTOs.Questions;
 using EExamSystem.Shared.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace EExamSystem.Api.Controllers;
 /// <summary>
 /// Manages the creation, retrieval, updating, and deletion of exam questions and their associated options.
 /// </summary>
+[Authorize]
 [ApiController]
 [Route("api/v1")]
 public class QuestionsController(AppDbContext context) : ControllerBase
@@ -51,6 +53,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// <response code="201">Returns the created question with generated IDs.</response>
     /// <response code="400">If the payload fails validation.</response>
     /// <response code="404">If the specified chapter does not exist.</response>
+    [Authorize(Roles = "Instructor,Admin")]
     [HttpPost("chapters/{testbankChapterId}/questions")]
     public async Task<IActionResult> CreateQuestion(int testbankChapterId, [FromBody] QuestionCreateDto newQuestion)
     {
@@ -131,6 +134,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// <response code="204">Successfully updated the question.</response>
     /// <response code="400">If the payload fails validation.</response>
     /// <response code="404">If the question does not exist.</response>
+    [Authorize(Roles = "Instructor,Admin")]
     [HttpPut("questions/{id}")]
     public async Task<IActionResult> UpdateQuestion(int id, [FromBody] QuestionCreateDto updatedQuestion)
     {
@@ -163,6 +167,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// <param name="id">The ID of the question to delete.</param>
     /// <response code="204">Successfully deleted the question.</response>
     /// <response code="404">If the question does not exist.</response>
+    [Authorize(Roles = "Instructor,Admin")]
     [HttpDelete("questions/{id}")]
     public async Task<IActionResult> DeleteQuestion(int id)
     {

@@ -1,6 +1,7 @@
 using System.Data;
 using System.Text;
 using DotNetEnv;
+using EExamSystem.Api.Configuration;
 using EExamSystem.Api.Data;
 using EExamSystem.Shared.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -24,7 +25,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddOperationTransformer<SecurityRequirementsTransformer>();
+});
 
 builder.Services.AddCors(options =>
 {
