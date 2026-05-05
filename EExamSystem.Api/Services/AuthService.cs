@@ -32,7 +32,8 @@ public class AuthService : IAuthService
         };
 
         // Token Settings
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+        var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiry = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["Jwt:DurationInMinutes"]));
 
