@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Microsoft.IdentityModel.Tokens;
+using EExamSystem.Api.Interfaces;
 
 Env.Load();
 
@@ -35,7 +36,6 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
-
 // Configure identity services
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
@@ -76,6 +76,9 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(key)
     };
 });
+
+// Register authentication service
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
