@@ -19,8 +19,16 @@ public class AuthService : IAuthService
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Generates a JWT token for the authenticated user, including claims such as user ID, email, and full name. The token is signed using a secret key and has an expiration time based on the configuration settings.
+    /// </summary>
+    /// <param name="user">The user for whom to generate the token.</param>
+    /// <returns>A tuple containing the generated token and its expiration time.</returns>
     private (string Token, DateTime Expiry) GenerateJwtToken(User user)
     {
+        // get user roles
+        var userRoles = _userManager.GetRolesAsync(user).Result;
+
         // Prepare User informations that will be into the token
         var claims = new List<Claim>
         {
@@ -30,6 +38,11 @@ public class AuthService : IAuthService
 
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // Unique id for token
         };
+
+        foreach (var role in userRoles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         // Token Settings
         var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
@@ -50,6 +63,11 @@ public class AuthService : IAuthService
         return (Token: tokenString, Expiry: expiry);
     }
 
+    /// <summary>
+    /// Registers a new user with the provided registration details.
+    /// </summary>
+    /// <param name="registerDto">The registration details for the new user.</param>
+    /// <returns>A task representing the asynchronous operation, returning the authentication response.</returns>
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
     {
         // Create new user object
@@ -85,6 +103,11 @@ public class AuthService : IAuthService
         };
     }
 
+    /// <summary>
+    /// Authenticates a user with the provided login credentials.
+    /// </summary>
+    /// <param name="loginDto">The login details for the user.</param>
+    /// <returns>A task representing the asynchronous operation, returning the authentication response.</returns>
     public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
     {
         // Search for User with email
