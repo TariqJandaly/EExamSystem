@@ -77,6 +77,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddAuthorization();
+
 // Register authentication service
 builder.Services.AddScoped<IAuthService, AuthService>();
 
