@@ -23,10 +23,3 @@ public class Question
     // ADDED: The list of A, B, C, D choices
     public List<QuestionOption> Options { get; set; } = new();
 }
-    public string Content { get; set; } = string.Empty;
-    public string CorrectAnswer { get; set; } = string.Empty;
-    public int Points { get; set; } = 1;
-    
-    public int TestbankChapterId { get; set; }
-    public TestbankChapter? Chapter { get; set; }
-}
