@@ -56,15 +56,24 @@ var jwtSettings = builder.Configuration.GetSection("JWT");
 var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
 var issuer = jwtSettings["Issuer"];
 var audience = jwtSettings["Audience"];
-var expirationInMinutes = jwtSettings["ExpirationInMinutes"];
+var durationString = jwtSettings["ExpirationInMinutes"];
 
-// Check if Secret Key is not configured
-if (string.IsNullOrEmpty(jwtSecretKey) ||
-    string.IsNullOrEmpty(issuer) ||
-    string.IsNullOrEmpty(audience) ||
-    string.IsNullOrEmpty(expirationInMinutes))
+// Check if jwt configuration is not configured
+if (string.IsNullOrWhiteSpace(jwtSecretKey))
 {
-    throw new InvalidOperationException("JWT configuration is not complete in Environment Variables.");
+    throw new InvalidOperationException(
+        "JWT Secret Key is insecure or missing.");
+}
+
+if (string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience))
+{
+    throw new InvalidOperationException("JWT Issuer or Audience is not configured.");
+}
+
+if (!double.TryParse(durationString, out double durationInDays))
+{
+    throw new InvalidOperationException(
+        $"JWT DurationInDays '{durationString}' is not a valid number.");
 }
 
 var key = Encoding.UTF8.GetBytes(jwtSecretKey);
