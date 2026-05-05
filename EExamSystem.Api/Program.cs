@@ -73,7 +73,7 @@ if (string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience))
 if (!double.TryParse(durationString, out double durationInDays))
 {
     throw new InvalidOperationException(
-        $"JWT DurationInDays '{durationString}' is not a valid number.");
+        $"JWT ExpirationInMinutes '{durationString}' is not a valid number.");
 }
 
 var key = Encoding.UTF8.GetBytes(jwtSecretKey);
