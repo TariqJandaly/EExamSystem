@@ -54,11 +54,17 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 // Get JWT configuration from appsettings file
 var jwtSettings = builder.Configuration.GetSection("JWT");
 var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
+var issuer = jwtSettings["Issuer"];
+var audience = jwtSettings["Audience"];
+var expirationInMinutes = jwtSettings["ExpirationInMinutes"];
 
 // Check if Secret Key is not configured
-if (string.IsNullOrEmpty(jwtSecretKey))
+if (string.IsNullOrEmpty(jwtSecretKey) ||
+    string.IsNullOrEmpty(issuer) ||
+    string.IsNullOrEmpty(audience) ||
+    string.IsNullOrEmpty(expirationInMinutes))
 {
-    throw new InvalidOperationException("JWT Secret Key is not configured in Environment Variables.");
+    throw new InvalidOperationException("JWT configuration is not complete in Environment Variables.");
 }
 
 var key = Encoding.UTF8.GetBytes(jwtSecretKey);
