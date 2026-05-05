@@ -15,6 +15,14 @@ public class ExamCreateDto
     public DateTime EndTime { get; set; }
 
     [Required]
-    [Range(0, 600, ErrorMessage = "Duration must be between 0 and 600 minutes.")]
+    [Range(0, 600)]
     public int DurationMinutes { get; set; }
+
+    [Required]
+    [Range(1, 1000, ErrorMessage = "Max score must be greater than 0.")]
+    public int MaxScore { get; set; }
+
+    [Required]
+    [Range(0, 1000, ErrorMessage = "Passing score must be valid.")]
+    public int PassingScore { get; set; }
 }
