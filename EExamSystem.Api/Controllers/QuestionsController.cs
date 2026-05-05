@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EExamSystem.Api.Controllers;
-/// <summary>
-/// Manages the creation, retrieval, updating, and deletion of university courses.
-/// </summary>
+
 [ApiController]
 [Route("api/v1")]
 public class QuestionsController(AppDbContext context) : ControllerBase
@@ -83,5 +81,41 @@ public class QuestionsController(AppDbContext context) : ControllerBase
 
         if (question == null) return NotFound();
         return Ok(question);
+    }
+    
+    [HttpPut("questions/{id}")]
+    public async Task<IActionResult> UpdateQuestion(int id, [FromBody] QuestionCreateDto updatedQuestion)
+    {
+        var question = await context.Questions
+            .Include(q => q.Options)
+            .FirstOrDefaultAsync(q => q.Id == id);
+
+        if (question == null) return NotFound();
+
+        question.Content = updatedQuestion.Content;
+        question.Points = updatedQuestion.Points;
+
+        context.QuestionOptions.RemoveRange(question.Options);
+        
+        question.Options = updatedQuestion.Options.Select(o => new QuestionOption
+        {
+            Text = o.Text,
+            IsCorrect = o.IsCorrect
+        }).ToList();
+
+        await context.SaveChangesAsync();
+        return NoContent();
+    }
+    
+    [HttpDelete("questions/{id}")]
+    public async Task<IActionResult> DeleteQuestion(int id)
+    {
+        var question = await context.Questions.FindAsync(id);
+        if (question == null) return NotFound();
+
+        context.Questions.Remove(question);
+        await context.SaveChangesAsync();
+
+        return NoContent();
     }
 }
