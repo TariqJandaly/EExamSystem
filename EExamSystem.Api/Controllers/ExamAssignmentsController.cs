@@ -77,6 +77,7 @@ public class ExamAssignmentsController : ControllerBase
     /// <param name="examId">The ID of the exam.</param>
     /// <response code="200">Returns the list of assigned sections.</response>
     /// <response code="404">If the exam is not found.</response>
+    [Authorize(Roles = "Instructor,Admin")]
     [HttpGet("exams/{examId}/sections")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<SectionDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

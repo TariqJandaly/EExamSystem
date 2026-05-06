@@ -4,6 +4,7 @@ using EExamSystem.Shared.DTOs.Assignments;
 using EExamSystem.Shared.DTOs.Exams;
 using EExamSystem.Shared.DTOs.Sections;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace EExamSystem.Api.Services;
 
@@ -56,9 +57,9 @@ public class ExamAssignmentService : IExamAssignmentService
             // Attempt to persist changes to the database
             await _context.SaveChangesAsync();
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex) when
+            (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
-            // CONCURRENCY HANDLE: Catch simultaneous assignment attempts
             return new AssignmentResultDto<bool> { IsSuccess = false, Message = "ExamAlreadyAssigned" };
         }
 
