@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Microsoft.IdentityModel.Tokens;
 using EExamSystem.Api.Interfaces;
+using EExamSystem.Api.Services;
 using EExamSystem.Shared.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
@@ -132,6 +133,7 @@ builder.Services.AddAuthorization();
 
 // Register authentication service
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ISectionService, SectionService>();
 
 var app = builder.Build();
 
