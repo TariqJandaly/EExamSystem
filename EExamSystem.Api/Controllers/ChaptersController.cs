@@ -30,7 +30,7 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     {
         var testbankExists = await context.Testbanks.AnyAsync(t => t.Id == testbankId);
         if (!testbankExists) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Testbank with ID {testbankId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "TestbankNotFound", StatusCode = 404 });
         
         var chapters = await context.TestbankChapters
             .Where(c => c.TestbankId == testbankId)
@@ -62,7 +62,7 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     {
         var testbankExists = await context.Testbanks.AnyAsync(t => t.Id == testbankId);
         if (!testbankExists) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Testbank with ID {testbankId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "TestbankNotFound", StatusCode = 404 });
 
         var chapter = new TestbankChapter
         {
@@ -82,7 +82,7 @@ public class ChaptersController(AppDbContext context) : ControllerBase
             CreatedAt = chapter.CreatedAt
         };
 
-        return CreatedAtAction(nameof(GetChapter), new { id = chapter.Id }, new ServiceResponse<ChapterDto> { Data = createdDto, Message = "Chapter created successfully.", StatusCode = 201 });
+        return CreatedAtAction(nameof(GetChapter), new { id = chapter.Id }, new ServiceResponse<ChapterDto> { Data = createdDto, Message = "ChapterCreatedSuccess", StatusCode = 201 });
     }
 
     /// <summary>
@@ -109,7 +109,7 @@ public class ChaptersController(AppDbContext context) : ControllerBase
             .FirstOrDefaultAsync();
 
         if (chapter == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter with ID {id} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ChapterNotFound", StatusCode = 404 });
             
         return Ok(new ServiceResponse<ChapterDto> { Data = chapter });
     }
@@ -129,13 +129,13 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     {
         var chapter = await context.TestbankChapters.FindAsync(id);
         if (chapter == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter with ID {id} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ChapterNotFound", StatusCode = 404 });
 
         chapter.Name = updatedChapter.Name;
         chapter.Description = updatedChapter.Description;
         
         await context.SaveChangesAsync();
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Chapter updated successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "ChapterUpdatedSuccess" });
     }
 
     /// <summary>
@@ -152,11 +152,11 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     {
         var chapter = await context.TestbankChapters.FindAsync(id);
         if (chapter == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter with ID {id} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ChapterNotFound", StatusCode = 404 });
 
         context.TestbankChapters.Remove(chapter);
         await context.SaveChangesAsync();
 
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Chapter deleted successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "ChapterDeletedSuccess" });
     }
 }

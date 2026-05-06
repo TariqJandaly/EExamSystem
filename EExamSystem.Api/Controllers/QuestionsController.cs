@@ -29,7 +29,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     {
         var chapterExists = await context.TestbankChapters.AnyAsync(c => c.Id == testbankChapterId);
         if (!chapterExists)
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter with ID {testbankChapterId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ChapterNotFound", StatusCode = 404 });
 
         var questions = await context.Questions
             .Include(q => q.Options)
@@ -69,7 +69,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     {
         var chapterExists = await context.TestbankChapters.AnyAsync(c => c.Id == testbankChapterId);
         if (!chapterExists) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter with ID {testbankChapterId} not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ChapterNotFound", StatusCode = 404 });
 
         var question = new Question
         {
@@ -101,7 +101,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             }).ToList()
         };
 
-        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, new ServiceResponse<QuestionDto> { Data = createdDto, Message = "Question created successfully.", StatusCode = 201 });
+        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, new ServiceResponse<QuestionDto> { Data = createdDto, Message = "QuestionCreatedSuccess", StatusCode = 201 });
     }
     
     /// <summary>
@@ -134,7 +134,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             .FirstOrDefaultAsync();
 
         if (question == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Question with ID {id} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "QuestionNotFound", StatusCode = 404 });
             
         return Ok(new ServiceResponse<QuestionDto> { Data = question });
     }
@@ -159,7 +159,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             .FirstOrDefaultAsync(q => q.Id == id);
 
         if (question == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Question with ID {id} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "QuestionNotFound", StatusCode = 404 });
 
         question.Content = updatedQuestion.Content;
         question.Points = updatedQuestion.Points;
@@ -173,7 +173,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
         }).ToList();
 
         await context.SaveChangesAsync();
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Question updated successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "QuestionUpdatedSuccess" });
     }
     
     /// <summary>
@@ -190,11 +190,11 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     {
         var question = await context.Questions.FindAsync(id);
         if (question == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Question with ID {id} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "QuestionNotFound", StatusCode = 404 });
 
         context.Questions.Remove(question);
         await context.SaveChangesAsync();
 
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Question deleted successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "QuestionDeletedSuccess" });
     }
 }

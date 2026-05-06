@@ -32,7 +32,7 @@ public class ExamChaptersController(AppDbContext context) : ControllerBase
             .FirstOrDefaultAsync(e => e.Id == examId);
 
         if (exam == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Exam with ID {examId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ExamNotFound", StatusCode = 404 });
 
         var chapters = exam.CoveredChapters.Select(c => new ChapterDto
         {
@@ -63,21 +63,21 @@ public class ExamChaptersController(AppDbContext context) : ControllerBase
             .FirstOrDefaultAsync(e => e.Id == examId);
 
         if (exam == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Exam with ID {examId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ExamNotFound", StatusCode = 404 });
 
         var chapter = await context.TestbankChapters.FindAsync(chapterId);
         if (chapter == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter with ID {chapterId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ChapterNotFound", StatusCode = 404 });
 
         if (exam.CoveredChapters.Any(c => c.Id == chapterId))
         {
-            return BadRequest(new ErrorServiceResponse { Success = false, Message = $"Chapter {chapterId} is already attached to Exam {examId}.", StatusCode = 400 });
+            return BadRequest(new ErrorServiceResponse { Success = false, Message = "ChapterAlreadyAttached", StatusCode = 400 });
         }
 
         exam.CoveredChapters.Add(chapter);
         await context.SaveChangesAsync();
 
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Chapter attached successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "ChapterAttachedSuccess" });
     }
 
     /// <summary>
@@ -98,16 +98,16 @@ public class ExamChaptersController(AppDbContext context) : ControllerBase
             .FirstOrDefaultAsync(e => e.Id == examId);
 
         if (exam == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Exam with ID {examId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ExamNotFound", StatusCode = 404 });
 
         var chapterToRemove = exam.CoveredChapters.FirstOrDefault(c => c.Id == chapterId);
         
         if (chapterToRemove == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter {chapterId} is not currently attached to Exam {examId}.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ChapterNotAttached", StatusCode = 404 });
 
         exam.CoveredChapters.Remove(chapterToRemove);
         await context.SaveChangesAsync();
 
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Chapter removed successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "ChapterRemovedSuccess" });
     }
 }
