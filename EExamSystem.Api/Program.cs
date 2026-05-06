@@ -124,7 +124,7 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key),
-        
+
         RoleClaimType = System.Security.Claims.ClaimTypes.Role
     };
 });
@@ -133,8 +133,13 @@ builder.Services.AddAuthorization();
 
 // Register authentication service
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Register testbank service
+builder.Services.AddScoped<ITestbankService, TestbankService>();
+
 builder.Services.AddScoped<ISectionService, SectionService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+
 
 var app = builder.Build();
 
