@@ -4,6 +4,7 @@ using EExamSystem.Api.Interfaces;
 using EExamSystem.Shared.DTOs.Testbanks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using EExamSystem.Shared.DTOs;
 
 namespace EExamSystem.Api.Controllers;
 
@@ -34,9 +35,7 @@ public class TestbankController : ControllerBase
     public async Task<IActionResult> GetAllTestbanks()
     {
         var result = await _testbankService.GetAllTestbanksAsync();
-        if (!result.Success)
-            return BadRequest(result);
-        return Ok(result);
+        return StatusCode(result.StatusCode, result);
     }
 
     /// <summary>
@@ -48,18 +47,13 @@ public class TestbankController : ControllerBase
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpGet("{id}")]
     [Authorize(Roles = "Chair,Admin,Instructor,Student")]
+    [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTestbank(int id)
     {
         var result = await _testbankService.GetTestbankAsync(id);
 
-        if (!result.Success)
-        {
-            if (result.StatusCode == 404)
-                return NotFound(result);
-            return BadRequest(result);
-        }
-
-        return Ok(result);
+        return StatusCode(result.StatusCode, result);
     }
 
     /// <summary>
@@ -89,13 +83,7 @@ public class TestbankController : ControllerBase
     public async Task<IActionResult> DeleteTestbank(int id)
     {
         var result = await _testbankService.DeleteTestbankAsync(id);
-        if (!result.Success)
-        {
-            if (result.StatusCode == 404)
-                return NotFound(result);
-            return BadRequest(result);
-        }
-        return Ok(result);
+        return StatusCode(result.StatusCode, result);
     }
 
 
@@ -112,12 +100,7 @@ public class TestbankController : ControllerBase
     public async Task<IActionResult> UpdateTestbank(int id, [FromBody] TestbankCreateDto testbankCreateDto)
     {
         var result = await _testbankService.UpdateTestbankAsync(id, testbankCreateDto);
-        if (!result.Success)
-        {
-            if (result.StatusCode == 404)
-                return NotFound(result);
-            return BadRequest(result);
-        }
-        return Ok(result);
+
+        return StatusCode(result.StatusCode, result);
     }
 }
