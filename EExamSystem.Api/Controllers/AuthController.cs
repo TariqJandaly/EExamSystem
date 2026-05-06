@@ -1,4 +1,5 @@
 using EExamSystem.Api.Interfaces;
+using EExamSystem.Shared.DTOs;
 using EExamSystem.Shared.DTOs.Auth;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,6 +26,8 @@ public class AuthController : ControllerBase
     /// <response code="200">Returns the authentication data if registration is successful.</response>
     /// <response code="400">Returns an error message.</response>
     [HttpPost("register")]
+    [ProducesResponseType(typeof(ServiceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
         var result = await _authService.RegisterAsync(registerDto);
@@ -32,9 +35,8 @@ public class AuthController : ControllerBase
         if (result.IsSuccess)
             return Ok(result); // Status 200 with auth data
 
-        return BadRequest(result); // Status 400
+        return BadRequest(new ErrorServiceResponse { Success = false, Message = result.Message, StatusCode = 400 });
     }
-
 
     /// <summary>
     /// Authenticates a user with the provided login credentials and returns an authentication token if successful.
@@ -48,6 +50,8 @@ public class AuthController : ControllerBase
     /// <response code="200">Returns the authentication data if login is successful.</response>
     /// <response code="401">Returns an error message if authentication fails.</response>
     [HttpPost("login")]
+    [ProducesResponseType(typeof(ServiceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
         var result = await _authService.LoginAsync(loginDto);
@@ -55,6 +59,6 @@ public class AuthController : ControllerBase
         if (result.IsSuccess)
             return Ok(result); // Status 200 with auth data
 
-        return Unauthorized(result); // Status 401
+        return Unauthorized(new ErrorServiceResponse { Success = false, Message = result.Message, StatusCode = 401 });
     }
 }

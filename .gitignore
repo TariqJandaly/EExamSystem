@@ -9,3 +9,4 @@ node_modules
 .env
 app.min.css
 Migrations
+*.http
