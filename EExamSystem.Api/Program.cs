@@ -139,6 +139,7 @@ builder.Services.AddScoped<ITestbankService, TestbankService>();
 
 builder.Services.AddScoped<ISectionService, SectionService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<IExamAssignmentService, ExamAssignmentService>();
 
 
 var app = builder.Build();
