@@ -44,7 +44,7 @@ public class AuthService : IAuthService
 
         foreach (var role in userRoles)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            claims.Add(new Claim("role", role));
         }
 
         // Token Settings

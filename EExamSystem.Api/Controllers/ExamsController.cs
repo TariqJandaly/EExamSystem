@@ -1,4 +1,5 @@
 using EExamSystem.Api.Data;
+using EExamSystem.Shared.DTOs;
 using EExamSystem.Shared.DTOs.Exams;
 using EExamSystem.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -23,10 +24,13 @@ public class ExamsController(AppDbContext context) : ControllerBase
     /// <response code="200">Returns the list of exams successfully.</response>
     /// <response code="404">If the specified course does not exist.</response>
     [HttpGet("courses/{courseId}/exams")]
-    public async Task<IActionResult> GetExamsForCourse(int courseId)
+    [ProducesResponseType(typeof(ServiceResponse<IEnumerable<ExamDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ServiceResponse<IEnumerable<ExamDto>>>> GetExamsForCourse(int courseId)
     {
         var courseExists = await context.Courses.AnyAsync(c => c.Id == courseId);
-        if (!courseExists) return NotFound($"Course with ID {courseId} was not found.");
+        if (!courseExists) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
 
         var exams = await context.Exams
             .Where(e => e.CourseId == courseId)
@@ -43,7 +47,7 @@ public class ExamsController(AppDbContext context) : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(exams);
+        return Ok(new ServiceResponse<IEnumerable<ExamDto>> { Data = exams });
     }
 
     /// <summary>
@@ -57,16 +61,20 @@ public class ExamsController(AppDbContext context) : ControllerBase
     /// <response code="404">If the specified course does not exist.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPost("courses/{courseId}/exams")]
-    public async Task<IActionResult> CreateExam(int courseId, [FromBody] ExamCreateDto newExam)
+    [ProducesResponseType(typeof(ServiceResponse<ExamDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ServiceResponse<ExamDto>>> CreateExam(int courseId, [FromBody] ExamCreateDto newExam)
     {
         if (newExam.EndTime <= newExam.StartTime)
-            return BadRequest("The exam's end time must be after its start time.");
+            return BadRequest(new ErrorServiceResponse { Success = false, Message = "The exam's end time must be after its start time.", StatusCode = 400 });
             
         if (newExam.PassingScore > newExam.MaxScore)
-            return BadRequest("The passing score cannot be higher than the maximum score.");
+            return BadRequest(new ErrorServiceResponse { Success = false, Message = "The passing score cannot be higher than the maximum score.", StatusCode = 400 });
 
         var courseExists = await context.Courses.AnyAsync(c => c.Id == courseId);
-        if (!courseExists) return NotFound($"Course with ID {courseId} was not found.");
+        if (!courseExists) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
 
         var exam = new Exam
         {
@@ -94,7 +102,7 @@ public class ExamsController(AppDbContext context) : ControllerBase
             CreatedAt = exam.CreatedAt
         };
 
-        return CreatedAtAction(nameof(GetExam), new { id = exam.Id }, createdDto);
+        return CreatedAtAction(nameof(GetExam), new { id = exam.Id }, new ServiceResponse<ExamDto> { Data = createdDto, Message = "Exam created successfully.", StatusCode = 201 });
     }
 
     /// <summary>
@@ -105,7 +113,9 @@ public class ExamsController(AppDbContext context) : ControllerBase
     /// <response code="200">Returns the requested exam successfully.</response>
     /// <response code="404">If the specified exam does not exist.</response>
     [HttpGet("exams/{id}")]
-    public async Task<IActionResult> GetExam(int id)
+    [ProducesResponseType(typeof(ServiceResponse<ExamDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ServiceResponse<ExamDto>>> GetExam(int id)
     {
         var exam = await context.Exams
             .Where(e => e.Id == id)
@@ -122,8 +132,10 @@ public class ExamsController(AppDbContext context) : ControllerBase
             })
             .FirstOrDefaultAsync();
 
-        if (exam == null) return NotFound($"Exam with ID {id} was not found.");
-        return Ok(exam);
+        if (exam == null) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Exam with ID {id} was not found.", StatusCode = 404 });
+            
+        return Ok(new ServiceResponse<ExamDto> { Data = exam });
     }
 
     /// <summary>
@@ -131,21 +143,25 @@ public class ExamsController(AppDbContext context) : ControllerBase
     /// </summary>
     /// <param name="id">The ID of the exam to update.</param>
     /// <param name="updatedExam">The updated exam payload.</param>
-    /// <response code="204">Successfully updated the exam.</response>
+    /// <response code="200">Successfully updated the exam.</response>
     /// <response code="400">If the end time is before the start time, or passing score exceeds max score.</response>
     /// <response code="404">If the specified exam does not exist.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPut("exams/{id}")]
-    public async Task<IActionResult> UpdateExam(int id, [FromBody] ExamCreateDto updatedExam)
+    [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ServiceResponse<bool>>> UpdateExam(int id, [FromBody] ExamCreateDto updatedExam)
     {
         if (updatedExam.EndTime <= updatedExam.StartTime)
-            return BadRequest("The exam's end time must be after its start time.");
+            return BadRequest(new ErrorServiceResponse { Success = false, Message = "The exam's end time must be after its start time.", StatusCode = 400 });
             
         if (updatedExam.PassingScore > updatedExam.MaxScore)
-            return BadRequest("The passing score cannot be higher than the maximum score.");
+            return BadRequest(new ErrorServiceResponse { Success = false, Message = "The passing score cannot be higher than the maximum score.", StatusCode = 400 });
 
         var exam = await context.Exams.FindAsync(id);
-        if (exam == null) return NotFound($"Exam with ID {id} was not found.");
+        if (exam == null) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Exam with ID {id} was not found.", StatusCode = 404 });
 
         exam.Title = updatedExam.Title;
         exam.StartTime = updatedExam.StartTime;
@@ -155,25 +171,28 @@ public class ExamsController(AppDbContext context) : ControllerBase
         exam.PassingScore = updatedExam.PassingScore;
 
         await context.SaveChangesAsync();
-        return NoContent();
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "Exam updated successfully." });
     }
 
     /// <summary>
     /// Deletes an exam.
     /// </summary>
     /// <param name="id">The ID of the exam to delete.</param>
-    /// <response code="204">Successfully deleted the exam.</response>
+    /// <response code="200">Successfully deleted the exam.</response>
     /// <response code="404">If the specified exam does not exist.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpDelete("exams/{id}")]
-    public async Task<IActionResult> DeleteExam(int id)
+    [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ServiceResponse<bool>>> DeleteExam(int id)
     {
         var exam = await context.Exams.FindAsync(id);
-        if (exam == null) return NotFound($"Exam with ID {id} was not found.");
+        if (exam == null) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Exam with ID {id} was not found.", StatusCode = 404 });
 
         context.Exams.Remove(exam);
         await context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "Exam deleted successfully." });
     }
 }

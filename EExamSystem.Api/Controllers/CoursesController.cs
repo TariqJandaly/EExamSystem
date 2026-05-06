@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using EExamSystem.Api.Data;
+using EExamSystem.Shared.DTOs;
 using EExamSystem.Shared.DTOs.Courses;
 using EExamSystem.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -21,7 +22,8 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <returns>A collection of CourseDto objects.</returns>
     /// <response code="200">Returns the list successfully.</response>
     [HttpGet]
-    public async Task<IActionResult> GetCourses()
+    [ProducesResponseType(typeof(ServiceResponse<IEnumerable<CourseDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ServiceResponse<IEnumerable<CourseDto>>>> GetCourses()
     {
         var courses = await context.Courses
             .Select(c => new CourseDto
@@ -32,7 +34,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(courses); 
+        return Ok(new ServiceResponse<IEnumerable<CourseDto>> { Data = courses }); 
     }
     
     /// <summary>
@@ -43,7 +45,9 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <response code="200">Returns the requested course.</response>
     /// <response code="404">If the course does not exist.</response>
     [HttpGet("{courseId}")] 
-    public async Task<IActionResult> GetCourse(int courseId)
+    [ProducesResponseType(typeof(ServiceResponse<CourseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ServiceResponse<CourseDto>>> GetCourse(int courseId)
     {
         var course = await context.Courses
             .Where(c => c.Id == courseId)
@@ -57,10 +61,10 @@ public class CoursesController(AppDbContext context) : ControllerBase
 
         if (course == null)
         {
-            return NotFound($"Course with ID {courseId} was not found.");
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
         }
 
-        return Ok(course);
+        return Ok(new ServiceResponse<CourseDto> { Data = course });
     }
     
     /// <summary>
@@ -72,7 +76,9 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <response code="400">If the provided data is invalid.</response>
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> CreateCourse([FromBody] CreateCourseDto newCourse)
+    [ProducesResponseType(typeof(ServiceResponse<CourseDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ServiceResponse<CourseDto>>> CreateCourse([FromBody] CreateCourseDto newCourse)
     {
         var course = new Course
         {
@@ -93,7 +99,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
         return CreatedAtAction(
             nameof(GetCourse),
             new { courseId = createdCourseDto.Id },
-            createdCourseDto
+            new ServiceResponse<CourseDto> { Data = createdCourseDto, Message = "Course created successfully.", StatusCode = 201 }
         );
     }
 
@@ -102,48 +108,53 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// </summary>
     /// <param name="courseId">The ID of the course to update.</param>
     /// <param name="updatedCourse">The updated course data.</param>
-    /// <response code="204">Successfully updated the course.</response>
+    /// <response code="200">Successfully updated the course.</response>
     /// <response code="400">If the ID in the URL does not match the ID in the body.</response>
     /// <response code="404">If the course does not exist.</response>
     [Authorize(Roles = "Admin")]
     [HttpPut("{courseId}")]
-    public async Task<ActionResult> UpdateCourse(int courseId, [FromBody] CreateCourseDto updatedCourse)
+    [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ServiceResponse<bool>>> UpdateCourse(int courseId, [FromBody] CreateCourseDto updatedCourse)
     {
         var existingCourse = await context.Courses.FindAsync(courseId);
         
         if (existingCourse == null)
         {
-            return NotFound($"Course with ID {courseId} was not found.");
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
         }
         existingCourse.Code = updatedCourse.Code;
         existingCourse.Name = updatedCourse.Name;
 
         await context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "Course updated successfully." });
     }
     
     /// <summary>
     /// Deletes a specific course from the system.
     /// </summary>
     /// <param name="courseId">The ID of the course to delete.</param>
-    /// <response code="204">Successfully deleted the course.</response>
+    /// <response code="200">Successfully deleted the course.</response>
     /// <response code="404">If the course does not exist.</response>
     [Authorize(Roles = "Admin")]
     [HttpDelete("{courseId}")]
-    public async Task<ActionResult> DeleteCourse(int courseId)
+    [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ServiceResponse<bool>>> DeleteCourse(int courseId)
     {
         var existingCourse = await context.Courses.FindAsync(courseId);
         
         if (existingCourse == null)
         {
-            return NotFound($"Course with ID {courseId} was not found.");
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
         }
 
         context.Courses.Remove(existingCourse);
 
         await context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "Course deleted successfully." });
     }
 }

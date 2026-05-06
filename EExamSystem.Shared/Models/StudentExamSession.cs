@@ -7,7 +7,7 @@ public class StudentExamSession
     public int ExamId { get; set; }
     public Exam? Exam { get; set; }
     
-    public int StudentId { get; set; }
+    public string StudentId { get; set; } = string.Empty;
     public User? Student { get; set; }
     
     public DateTime StartedAt { get; set; }
