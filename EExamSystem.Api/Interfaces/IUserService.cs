@@ -14,8 +14,8 @@ public interface IUserService
     Task<ServiceResponse<UserDto>> DeleteUserAsync(string id);
     Task<ServiceResponse<UserDto>> UpdateUserAsync(string id, UserCreateDto userCreateDto);
     Task<ServiceResponse<UserRolesDto>> GetUserRolesAsync(string id);
-    Task<ServiceResponse<UserRolesDto>> AddUserRolesAsync(string id, UserRolesDto userRolesDto);
-    Task<ServiceResponse<UserRolesDto>> RemoveUserRolesAsync(string id, UserRolesDto userRolesDto);
+    Task<ServiceResponse<UserRolesDto>> AddRolesToUserAsync(string id, UserRolesDto userRolesDto);
+    Task<ServiceResponse<UserRolesDto>> RemoveRolesFromUserAsync(string id, UserRolesDto userRolesDto);
     Task<ServiceResponse> ChangeUserPasswordAsync(string id, UserChangePasswordDto changePasswordDto);
 
 }

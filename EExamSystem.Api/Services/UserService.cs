@@ -114,8 +114,17 @@ public class UserService : IUserService
             };
         }
 
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+        var result = await _userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            return new ServiceResponse<UserDto>
+            {
+                Success = false,
+                Message = errors,
+                StatusCode = 400
+            };
+        }
 
         return new ServiceResponse<UserDto>
         {
@@ -146,7 +155,18 @@ public class UserService : IUserService
         user.FullName = userCreateDto.FullName;
         user.Email = userCreateDto.Email;
         user.UserName = userCreateDto.Email; // Update UserName as well
-        await _context.SaveChangesAsync();
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            return new ServiceResponse<UserDto>
+            {
+                Success = false,
+                Message = errors,
+                StatusCode = 400
+            };
+        }
 
         return new ServiceResponse<UserDto>
         {
@@ -188,7 +208,7 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<ServiceResponse<UserRolesDto>> AddUserRolesAsync(string id, UserRolesDto userRolesDto)
+    public async Task<ServiceResponse<UserRolesDto>> AddRolesToUserAsync(string id, UserRolesDto userRolesDto)
     {
         var user = await _userManager.FindByIdAsync(id);
         if (user == null)
@@ -227,7 +247,7 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<ServiceResponse<UserRolesDto>> RemoveUserRolesAsync(string id, UserRolesDto userRolesDto)
+    public async Task<ServiceResponse<UserRolesDto>> RemoveRolesFromUserAsync(string id, UserRolesDto userRolesDto)
     {
         var user = await _userManager.FindByIdAsync(id);
         if (user == null)
