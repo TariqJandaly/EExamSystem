@@ -2,6 +2,10 @@ using EExamSystem.Shared.DTOs.Testbanks;
 using EExamSystem.Shared.DTOs;
 namespace EExamSystem.Api.Interfaces;
 
+
+/// <summary>
+/// Interface for managing testbanks, which are collections of exam questions associated with specific courses.
+/// </summary>
 public interface ITestbankService
 {
     Task<ServiceResponse<List<TestbankDto>>> GetAllTestbanksAsync();

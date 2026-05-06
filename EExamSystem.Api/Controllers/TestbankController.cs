@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EExamSystem.Api.Controllers;
 
+/// <summary>
+/// Controller for managing testbanks, which are collections of exam questions associated with specific courses.
+/// </summary>
 [Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
@@ -20,6 +23,12 @@ public class TestbankController : ControllerBase
         _testbankService = testbankService;
     }
 
+    /// <summary>
+    /// Retrieves a list of all testbanks. Accessible to users with Admin or Instructor roles.
+    /// </summary>
+    /// <returns>A service response containing the list of testbanks or an error message.</returns>
+    /// <response code="200">Returns the list of testbanks if the request is successful.</response>
+    /// <response code="400">Returns an error message if the request fails.</response>
     [HttpGet]
     [Authorize(Roles = "Admin,Instructor")]
     public async Task<IActionResult> GetAllTestbanks()
@@ -30,6 +39,13 @@ public class TestbankController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Retrieves a testbank by its ID. Accessible to users with Admin or Instructor roles.
+    /// </summary>
+    /// <param name="id">The ID of the testbank to retrieve.</param>
+    /// <returns>A service response containing the testbank or an error message.</returns>
+    /// <response code="200">Returns the testbank if the request is successful.</response>
+    /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetTestbank(int id)
     {
@@ -45,6 +61,13 @@ public class TestbankController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Creates a new testbank with the provided details. Accessible only to users with the Admin role.
+    /// </summary>
+    /// <param name="testbankCreateDto">The details for the new testbank.</param>
+    /// <returns>A service response containing the created testbank or an error message.</returns>
+    /// <response code="200">Returns the created testbank if the request is successful.</response>
+    /// <response code="400">Returns an error message if the request fails.</response>
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateTestbank([FromBody] TestbankCreateDto testbankCreateDto)
@@ -55,6 +78,13 @@ public class TestbankController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Deletes a testbank by its ID. Accessible only to users with the Admin role.
+    /// </summary>
+    /// <param name="id">The ID of the testbank to delete.</param>
+    /// <returns>A service response indicating the result of the operation.</returns>
+    /// <response code="200">Returns a success message if the request is successful.</response>
+    /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteTestbank(int id)
@@ -69,6 +99,15 @@ public class TestbankController : ControllerBase
         return Ok(result);
     }
 
+
+    /// <summary>
+    /// Updates an existing testbank with the provided details. Accessible only to users with the Admin role.
+    /// </summary>
+    /// <param name="id">The ID of the testbank to update.</param>
+    /// <param name="testbankCreateDto">The updated details for the testbank.</param>
+    /// <returns>A service response containing the updated testbank or an error message.</returns>
+    /// <response code="200">Returns the updated testbank if the request is successful.</response>
+    /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,Instructor")]
     public async Task<IActionResult> UpdateTestbank(int id, [FromBody] TestbankCreateDto testbankCreateDto)
