@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Microsoft.IdentityModel.Tokens;
 using EExamSystem.Api.Interfaces;
+using EExamSystem.Shared.DTOs;
+using Microsoft.AspNetCore.Mvc;
 
 Env.Load();
 
@@ -23,7 +25,29 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .ToList();
+
+            // Wrap them in your standard ServiceResponse
+            var response = new ServiceResponse<object>
+            {
+                Success = false,
+                Message = "Validation failed. Please check the provided data.",
+                Data = new { Errors = errors },
+                StatusCode = StatusCodes.Status400BadRequest
+            };
+
+            return new BadRequestObjectResult(response);
+        };
+    });
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi(options =>
 {

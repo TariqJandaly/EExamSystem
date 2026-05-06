@@ -1,4 +1,5 @@
 using EExamSystem.Api.Data;
+using EExamSystem.Shared.DTOs;
 using EExamSystem.Shared.DTOs.Questions;
 using EExamSystem.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -22,7 +23,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// <returns>A list of QuestionDto objects.</returns>
     /// <response code="200">Returns the list of questions successfully.</response>
     [HttpGet("chapters/{testbankChapterId}/questions")]
-    public async Task<IActionResult> GetQuestionsForChapter(int testbankChapterId)
+    public async Task<ActionResult<ServiceResponse<IEnumerable<QuestionDto>>>> GetQuestionsForChapter(int testbankChapterId)
     {
         var questions = await context.Questions
             .Include(q => q.Options)
@@ -41,7 +42,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             })
             .ToListAsync();
 
-        return Ok(questions);
+        return Ok(new ServiceResponse<IEnumerable<QuestionDto>> { Data = questions });
     }
     
     /// <summary>
@@ -55,10 +56,10 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// <response code="404">If the specified chapter does not exist.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPost("chapters/{testbankChapterId}/questions")]
-    public async Task<IActionResult> CreateQuestion(int testbankChapterId, [FromBody] QuestionCreateDto newQuestion)
+    public async Task<ActionResult<ServiceResponse<QuestionDto>>> CreateQuestion(int testbankChapterId, [FromBody] QuestionCreateDto newQuestion)
     {
         var chapterExists = await context.TestbankChapters.AnyAsync(c => c.Id == testbankChapterId);
-        if (!chapterExists) return NotFound($"Chapter {testbankChapterId} not found.");
+        if (!chapterExists) return NotFound(new ServiceResponse<QuestionDto> { Success = false, Message = $"Chapter {testbankChapterId} not found.", StatusCode = 404 });
 
         var question = new Question
         {
@@ -75,10 +76,8 @@ public class QuestionsController(AppDbContext context) : ControllerBase
 
         context.Questions.Add(question);
         
-        // This generates the IDs for both the Question and all its Options
         await context.SaveChangesAsync(); 
 
-        // Map it back to a DTO to return to the frontend
         var createdDto = new QuestionDto
         {
             Id = question.Id,
@@ -92,7 +91,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             }).ToList()
         };
 
-        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, createdDto);
+        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, new ServiceResponse<QuestionDto> { Data = createdDto, Message = "Question created successfully.", StatusCode = 201 });
     }
     
     /// <summary>
@@ -103,7 +102,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// <response code="200">Returns the requested question.</response>
     /// <response code="404">If the question does not exist.</response>
     [HttpGet("questions/{id}")]
-    public async Task<IActionResult> GetQuestion(int id)
+    public async Task<ActionResult<ServiceResponse<QuestionDto>>> GetQuestion(int id)
     {
         var question = await context.Questions
             .Include(q => q.Options)
@@ -122,8 +121,8 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             })
             .FirstOrDefaultAsync();
 
-        if (question == null) return NotFound($"Question with ID {id} was not found.");
-        return Ok(question);
+        if (question == null) return NotFound(new ServiceResponse<QuestionDto> { Success = false, Message = $"Question with ID {id} was not found.", StatusCode = 404 });
+        return Ok(new ServiceResponse<QuestionDto> { Data = question });
     }
     
     /// <summary>
@@ -131,24 +130,22 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// </summary>
     /// <param name="id">The ID of the question to update.</param>
     /// <param name="updatedQuestion">The updated question and options payload.</param>
-    /// <response code="204">Successfully updated the question.</response>
+    /// <response code="200">Successfully updated the question.</response>
     /// <response code="400">If the payload fails validation.</response>
     /// <response code="404">If the question does not exist.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPut("questions/{id}")]
-    public async Task<IActionResult> UpdateQuestion(int id, [FromBody] QuestionCreateDto updatedQuestion)
+    public async Task<ActionResult<ServiceResponse<bool>>> UpdateQuestion(int id, [FromBody] QuestionCreateDto updatedQuestion)
     {
         var question = await context.Questions
             .Include(q => q.Options)
             .FirstOrDefaultAsync(q => q.Id == id);
 
-        if (question == null) return NotFound($"Question with ID {id} was not found.");
+        if (question == null) return NotFound(new ServiceResponse<bool> { Success = false, Message = $"Question with ID {id} was not found.", StatusCode = 404 });
 
-        // Update parent properties
         question.Content = updatedQuestion.Content;
         question.Points = updatedQuestion.Points;
 
-        // Wipe old options and insert new ones
         context.QuestionOptions.RemoveRange(question.Options);
         
         question.Options = updatedQuestion.Options.Select(o => new QuestionOption
@@ -158,25 +155,25 @@ public class QuestionsController(AppDbContext context) : ControllerBase
         }).ToList();
 
         await context.SaveChangesAsync();
-        return NoContent();
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "Question updated successfully." });
     }
     
     /// <summary>
     /// Deletes a specific question and cascades the deletion to all its options.
     /// </summary>
     /// <param name="id">The ID of the question to delete.</param>
-    /// <response code="204">Successfully deleted the question.</response>
+    /// <response code="200">Successfully deleted the question.</response>
     /// <response code="404">If the question does not exist.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpDelete("questions/{id}")]
-    public async Task<IActionResult> DeleteQuestion(int id)
+    public async Task<ActionResult<ServiceResponse<bool>>> DeleteQuestion(int id)
     {
         var question = await context.Questions.FindAsync(id);
-        if (question == null) return NotFound($"Question with ID {id} was not found.");
+        if (question == null) return NotFound(new ServiceResponse<bool> { Success = false, Message = $"Question with ID {id} was not found.", StatusCode = 404 });
 
         context.Questions.Remove(question);
         await context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "Question deleted successfully." });
     }
 }
