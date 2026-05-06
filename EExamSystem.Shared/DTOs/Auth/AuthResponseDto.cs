@@ -1,5 +1,3 @@
-using System.Security.Cryptography.X509Certificates;
-
 namespace EExamSystem.Shared.DTOs.Auth;
 
 public class AuthResponseDto
