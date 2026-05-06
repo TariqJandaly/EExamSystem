@@ -2,10 +2,12 @@
 
 using EExamSystem.Api.Interfaces;
 using EExamSystem.Shared.DTOs.Testbanks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EExamSystem.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
 public class TestbankController : ControllerBase
@@ -19,6 +21,7 @@ public class TestbankController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Instructor")]
     public async Task<IActionResult> GetAllTestbanks()
     {
         var result = await _testbankService.GetAllTestbanksAsync();
@@ -43,6 +46,7 @@ public class TestbankController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> CreateTestbank([FromBody] TestbankCreateDto testbankCreateDto)
     {
         var result = await _testbankService.CreateTestbankAsync(testbankCreateDto);
@@ -52,6 +56,7 @@ public class TestbankController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> DeleteTestbank(int id)
     {
         var result = await _testbankService.DeleteTestbankAsync(id);
@@ -65,6 +70,7 @@ public class TestbankController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,Instructor")]
     public async Task<IActionResult> UpdateTestbank(int id, [FromBody] TestbankCreateDto testbankCreateDto)
     {
         var result = await _testbankService.UpdateTestbankAsync(id, testbankCreateDto);
