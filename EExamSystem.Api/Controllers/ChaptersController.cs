@@ -24,10 +24,13 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     /// <response code="200">Returns the list of chapters successfully.</response>
     /// <response code="404">If the specified testbank does not exist.</response>
     [HttpGet("testbanks/{testbankId}/chapters")]
+    [ProducesResponseType(typeof(ServiceResponse<IEnumerable<ChapterDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ServiceResponse<IEnumerable<ChapterDto>>>> GetChaptersForTestbank(int testbankId)
     {
         var testbankExists = await context.Testbanks.AnyAsync(t => t.Id == testbankId);
-        if (!testbankExists) return NotFound(new ServiceResponse<IEnumerable<ChapterDto>> { Success = false, Message = $"Testbank with ID {testbankId} was not found.", StatusCode = 404 });
+        if (!testbankExists) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Testbank with ID {testbankId} was not found.", StatusCode = 404 });
         
         var chapters = await context.TestbankChapters
             .Where(c => c.TestbankId == testbankId)
@@ -53,10 +56,13 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     /// <response code="404">If the specified testbank does not exist.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPost("testbanks/{testbankId}/chapters")]
+    [ProducesResponseType(typeof(ServiceResponse<ChapterDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ServiceResponse<ChapterDto>>> CreateChapter(int testbankId, [FromBody] ChapterCreateDto newChapter)
     {
         var testbankExists = await context.Testbanks.AnyAsync(t => t.Id == testbankId);
-        if (!testbankExists) return NotFound(new ServiceResponse<ChapterDto> { Success = false, Message = $"Testbank with ID {testbankId} was not found.", StatusCode = 404 });
+        if (!testbankExists) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Testbank with ID {testbankId} was not found.", StatusCode = 404 });
 
         var chapter = new TestbankChapter
         {
@@ -87,6 +93,8 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     /// <response code="200">Returns the requested chapter.</response>
     /// <response code="404">If the chapter does not exist.</response>
     [HttpGet("chapters/{id}")]
+    [ProducesResponseType(typeof(ServiceResponse<ChapterDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ServiceResponse<ChapterDto>>> GetChapter(int id)
     {
         var chapter = await context.TestbankChapters
@@ -100,7 +108,9 @@ public class ChaptersController(AppDbContext context) : ControllerBase
             })
             .FirstOrDefaultAsync();
 
-        if (chapter == null) return NotFound(new ServiceResponse<ChapterDto> { Success = false, Message = $"Chapter with ID {id} was not found.", StatusCode = 404 });
+        if (chapter == null) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter with ID {id} was not found.", StatusCode = 404 });
+            
         return Ok(new ServiceResponse<ChapterDto> { Data = chapter });
     }
 
@@ -113,10 +123,13 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     /// <response code="404">If the chapter does not exist.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPut("chapters/{id}")]
+    [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ServiceResponse<bool>>> UpdateChapter(int id, [FromBody] ChapterCreateDto updatedChapter)
     {
         var chapter = await context.TestbankChapters.FindAsync(id);
-        if (chapter == null) return NotFound(new ServiceResponse<bool> { Success = false, Message = $"Chapter with ID {id} was not found.", StatusCode = 404 });
+        if (chapter == null) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter with ID {id} was not found.", StatusCode = 404 });
 
         chapter.Name = updatedChapter.Name;
         chapter.Description = updatedChapter.Description;
@@ -133,10 +146,13 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     /// <response code="404">If the chapter does not exist.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpDelete("chapters/{id}")]
+    [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ServiceResponse<bool>>> DeleteChapter(int id)
     {
         var chapter = await context.TestbankChapters.FindAsync(id);
-        if (chapter == null) return NotFound(new ServiceResponse<bool> { Success = false, Message = $"Chapter with ID {id} was not found.", StatusCode = 404 });
+        if (chapter == null) 
+            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Chapter with ID {id} was not found.", StatusCode = 404 });
 
         context.TestbankChapters.Remove(chapter);
         await context.SaveChangesAsync();
