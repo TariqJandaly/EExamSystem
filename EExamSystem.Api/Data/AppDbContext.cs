@@ -29,5 +29,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             new IdentityRole { Id = "3", Name = "Instructor", NormalizedName = "INSTRUCTOR", ConcurrencyStamp = "static-3" },
             new IdentityRole { Id = "4", Name = "Admin", NormalizedName = "ADMIN", ConcurrencyStamp = "static-4" }
         );
+        
+        // Prevent duplicate sessions
+        modelBuilder.Entity<StudentExamSession>().HasIndex(s => new { s.StudentId, s.ExamId }).IsUnique();
+        // Prevent duplicate answers
+        modelBuilder.Entity<StudentAnswer>().HasIndex(a => new { a.SessionId, a.QuestionId }).IsUnique();
     }
 }
