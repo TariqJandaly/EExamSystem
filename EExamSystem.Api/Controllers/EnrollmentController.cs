@@ -76,6 +76,7 @@ public class EnrollmentController : ControllerBase
     /// <param name="studentId">The unique ID of the student.</param>
     /// <response code="200">Returns the list of sections the student is enrolled in.</response>
     /// <response code="404">If the student record is not found.</response>
+    [Authorize(Roles = "Instructor,Admin")]
     [HttpGet("students/{studentId}/sections")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<SectionDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

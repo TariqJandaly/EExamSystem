@@ -2,6 +2,8 @@ using EExamSystem.Api.Data;
 using EExamSystem.Api.Interfaces;
 using EExamSystem.Shared.DTOs.Enrollment;
 using EExamSystem.Shared.DTOs.Sections;
+using EExamSystem.Shared.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace EExamSystem.Api.Services;
@@ -9,6 +11,7 @@ namespace EExamSystem.Api.Services;
 public class EnrollmentService : IEnrollmentService
 {
     private readonly AppDbContext _context;
+    private readonly UserManager<User> _userManager;
 
     public EnrollmentService(AppDbContext context)
     {
@@ -36,7 +39,13 @@ public class EnrollmentService : IEnrollmentService
         {
             return new EnrollmentResultDto<bool> { IsSuccess = false, Message = "StudentNotFound" };
         }
-
+        
+        var isStudent = await _userManager.IsInRoleAsync(student, "Student");
+        if (!isStudent)
+        {
+            return new EnrollmentResultDto<bool> { IsSuccess = false, Message = "InvalidUserRoleForEnrollment" };
+        }
+            
         // Verify that the student isn't already a member of this section
         if (section.Students.Any(u => u.Id == studentId))
         {
