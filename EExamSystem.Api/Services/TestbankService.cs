@@ -64,6 +64,18 @@ public class TestbankService : ITestbankService
 
     public async Task<ServiceResponse<TestbankDto>> CreateTestbankAsync(TestbankCreateDto testbankCreateDto)
     {
+        var courseExists = await _context.Courses.AnyAsync(c => c.Id == testbankCreateDto.CourseId);
+
+        if (!courseExists)
+        {
+            return new ServiceResponse<TestbankDto>
+            {
+                Success = false,
+                Message = "CourseNotFound",
+                StatusCode = 404
+            };
+        }
+
         var testbank = new Testbank
         {
             Name = testbankCreateDto.Name,
