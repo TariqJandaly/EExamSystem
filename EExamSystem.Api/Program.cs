@@ -24,6 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connString);
 });
 
+
 // Add services to the container.
 
 builder.Services.AddControllers()
@@ -143,6 +144,21 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ISectionService, SectionService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 
+
+
+// Ensure roles are created in the database
+var serviceProvider = builder.Services.BuildServiceProvider();
+using var scope = serviceProvider.CreateScope();
+var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+string[] roles = { UserRole.Admin, UserRole.Chair, UserRole.Instructor, UserRole.Student };
+
+foreach (var role in roles)
+{
+    if (!await roleManager.RoleExistsAsync(role))
+    {
+        await roleManager.CreateAsync(new IdentityRole(role));
+    }
+}
 
 var app = builder.Build();
 
