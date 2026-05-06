@@ -7,9 +7,9 @@ namespace EExamSystem.Shared.DTOs.Sessions;
 /// </summary>
 public class SubmitAnswerDto
 {
-    [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "A valid QuestionId must be provided.")]
     public int QuestionId { get; set; }
     
-    [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "A valid OptionId must be provided.")]
     public int OptionId { get; set; }
 }
