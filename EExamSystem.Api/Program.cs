@@ -134,6 +134,7 @@ builder.Services.AddAuthorization();
 // Register authentication service
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISectionService, SectionService>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 
 var app = builder.Build();
 
