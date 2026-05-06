@@ -106,6 +106,8 @@ builder.Services.AddAuthorization();
 
 // Register authentication service
 builder.Services.AddScoped<IAuthService, AuthService>();
+// Register testbank service
+builder.Services.AddScoped<ITestbankService, TestbankService>();
 
 var app = builder.Build();
 
