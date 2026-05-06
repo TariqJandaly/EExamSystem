@@ -137,6 +137,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Register testbank service
 builder.Services.AddScoped<ITestbankService, TestbankService>();
 
+// Register user service
+builder.Services.AddScoped<IUserService, UserService>();
+
 builder.Services.AddScoped<ISectionService, SectionService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 
