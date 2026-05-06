@@ -32,6 +32,9 @@ public class TestbankController : ControllerBase
     /// <response code="400">Returns an error message if the request fails.</response>
     [HttpGet]
     [Authorize(Roles = "Chair,Admin,Instructor")]
+    [ProducesResponseType(typeof(ServiceResponse<List<TestbankDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAllTestbanks()
     {
         var result = await _testbankService.GetAllTestbanksAsync();
@@ -65,6 +68,8 @@ public class TestbankController : ControllerBase
     /// <response code="400">Returns an error message if the request fails.</response>
     [HttpPost]
     [Authorize(Roles = "Chair,Admin")]
+    [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTestbank([FromBody] TestbankCreateDto testbankCreateDto)
     {
         var result = await _testbankService.CreateTestbankAsync(testbankCreateDto);
@@ -80,6 +85,8 @@ public class TestbankController : ControllerBase
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Chair,Admin")]
+    [ProducesResponseType(typeof(ServiceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTestbank(int id)
     {
         var result = await _testbankService.DeleteTestbankAsync(id);
@@ -97,6 +104,9 @@ public class TestbankController : ControllerBase
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpPut("{id}")]
     [Authorize(Roles = "Chair,Admin,Instructor")]
+    [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateTestbank(int id, [FromBody] TestbankCreateDto testbankCreateDto)
     {
         var result = await _testbankService.UpdateTestbankAsync(id, testbankCreateDto);
