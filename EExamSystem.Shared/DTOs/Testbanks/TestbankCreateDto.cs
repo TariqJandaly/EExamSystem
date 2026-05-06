@@ -9,5 +9,6 @@ public class TestbankCreateDto
     public string Name { get; set; }
 
     [Required(ErrorMessage = "CourseRequired")]
+    [Range(1, int.MaxValue, ErrorMessage = "InvalidCourseId")]
     public int CourseId { get; set; }
 }

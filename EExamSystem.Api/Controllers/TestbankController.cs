@@ -30,7 +30,7 @@ public class TestbankController : ControllerBase
     /// <response code="200">Returns the list of testbanks if the request is successful.</response>
     /// <response code="400">Returns an error message if the request fails.</response>
     [HttpGet]
-    [Authorize(Roles = "Admin,Instructor")]
+    [Authorize(Roles = "Chair,Admin,Instructor")]
     public async Task<IActionResult> GetAllTestbanks()
     {
         var result = await _testbankService.GetAllTestbanksAsync();
@@ -47,6 +47,7 @@ public class TestbankController : ControllerBase
     /// <response code="200">Returns the testbank if the request is successful.</response>
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpGet("{id}")]
+    [Authorize(Roles = "Chair,Admin,Instructor,Student")]
     public async Task<IActionResult> GetTestbank(int id)
     {
         var result = await _testbankService.GetTestbankAsync(id);
@@ -69,24 +70,22 @@ public class TestbankController : ControllerBase
     /// <response code="200">Returns the created testbank if the request is successful.</response>
     /// <response code="400">Returns an error message if the request fails.</response>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Chair,Admin")]
     public async Task<IActionResult> CreateTestbank([FromBody] TestbankCreateDto testbankCreateDto)
     {
         var result = await _testbankService.CreateTestbankAsync(testbankCreateDto);
-        if (!result.Success)
-            return BadRequest(result);
-        return Ok(result);
+        return StatusCode(result.StatusCode, result);
     }
 
     /// <summary>
-    /// Deletes a testbank by its ID. Accessible only to users with the Admin role.
+    /// Deletes a testbank by its ID. Accessible only to users with the Chair or Admin roles.
     /// </summary>
     /// <param name="id">The ID of the testbank to delete.</param>
     /// <returns>A service response indicating the result of the operation.</returns>
     /// <response code="200">Returns a success message if the request is successful.</response>
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Chair,Admin")]
     public async Task<IActionResult> DeleteTestbank(int id)
     {
         var result = await _testbankService.DeleteTestbankAsync(id);
@@ -101,7 +100,7 @@ public class TestbankController : ControllerBase
 
 
     /// <summary>
-    /// Updates an existing testbank with the provided details. Accessible only to users with the Admin role.
+    /// Updates an existing testbank with the provided details. Accessible only to users with the Chair, Admin and Instructor roles.
     /// </summary>
     /// <param name="id">The ID of the testbank to update.</param>
     /// <param name="testbankCreateDto">The updated details for the testbank.</param>
@@ -109,7 +108,7 @@ public class TestbankController : ControllerBase
     /// <response code="200">Returns the updated testbank if the request is successful.</response>
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin,Instructor")]
+    [Authorize(Roles = "Chair,Admin,Instructor")]
     public async Task<IActionResult> UpdateTestbank(int id, [FromBody] TestbankCreateDto testbankCreateDto)
     {
         var result = await _testbankService.UpdateTestbankAsync(id, testbankCreateDto);
