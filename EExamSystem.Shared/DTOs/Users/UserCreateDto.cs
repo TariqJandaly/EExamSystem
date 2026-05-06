@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace EExamSystem.Shared.DTOs.Testbanks;
+namespace EExamSystem.Shared.DTOs.Users;
 
 public class UserCreateDto
 {

@@ -1,4 +1,4 @@
-namespace EExamSystem.Shared.DTOs.Testbanks;
+namespace EExamSystem.Shared.DTOs.Users;
 
 public class UserDto
 {
