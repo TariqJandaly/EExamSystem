@@ -30,6 +30,7 @@ public class StudentExamsController : ControllerBase
     /// <response code="404">If the student profile cannot be found.</response>
     [HttpGet("active")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<ActiveExamDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetActiveExams()
     {
@@ -50,8 +51,10 @@ public class StudentExamsController : ControllerBase
     /// </summary>
     /// <response code="200">Returns the list of completed exams.</response>
     /// <response code="401">If the student is not authenticated.</response>
+    /// <response code="404">If the student profile cannot be found.</response>
     [HttpGet("history")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<ExamHistoryDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetExamHistory()
     {
@@ -71,10 +74,11 @@ public class StudentExamsController : ControllerBase
     /// </summary>
     /// <param name="examId">The ID of the exam.</param>
     /// <response code="200">Returns the exam lobby details.</response>
-    /// <response code="403">If the student is not authorized to view this exam.</response>
-    /// <response code="404">If the exam is not found.</response>
+    /// <response code="401">If the student is not authenticated.</response>
+    /// <response code="404">If the exam is not found, has already ended, or the student is not authorized to view it.</response>
     [HttpGet("{examId}/details")]
     [ProducesResponseType(typeof(ServiceResponse<ExamPreTestDetailsDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetExamLobbyDetails(int examId)
     {

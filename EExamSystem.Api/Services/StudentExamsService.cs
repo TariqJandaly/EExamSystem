@@ -27,10 +27,9 @@ public class StudentExamsService : IStudentExamsService
         var user = await _userManager.FindByIdAsync(studentId);
         if (user == null) return new StudentExamsResultDto<IEnumerable<ActiveExamDto>> { IsSuccess = false, Message = "StudentNotFound" };
 
-        // 1. Find exams assigned to sections where the student is enrolled, AND the exam hasn't ended.
         var activeExams = await _context.Exams
             .Where(e => e.AssignedSections.Any(s => s.Students.Any(u => u.Id == studentId)))
-            .Where(e => e.EndTime > DateTime.UtcNow) // Only show exams that are still open or upcoming
+            .Where(e => e.EndTime > DateTime.UtcNow) 
             .Include(e => e.Course)
             .Select(e => new ActiveExamDto
             {
@@ -55,7 +54,6 @@ public class StudentExamsService : IStudentExamsService
         var user = await _userManager.FindByIdAsync(studentId);
         if (user == null) return new StudentExamsResultDto<IEnumerable<ExamHistoryDto>> { IsSuccess = false, Message = "StudentNotFound" };
 
-        // 1. Fetch completed sessions for this specific student
         var history = await _context.ExamSessions
             .Include(ses => ses.Exam)
             .ThenInclude(e => e!.Course)
@@ -77,25 +75,27 @@ public class StudentExamsService : IStudentExamsService
     }
 
     /// <summary>
-    /// Retrieves pre-test lobby details, ensuring the student actually has authorization to view this exam.
+    /// Retrieves pre-test lobby details, ensuring the student has authorization AND the exam is still active.
     /// </summary>
     public async Task<StudentExamsResultDto<ExamPreTestDetailsDto>> GetExamDetailsAsync(string studentId, int examId)
     {
         var user = await _userManager.FindByIdAsync(studentId);
         if (user == null) return new StudentExamsResultDto<ExamPreTestDetailsDto> { IsSuccess = false, Message = "StudentNotFound" };
 
-        // 1. Fetch the exam, validating that the student's section is assigned to it
+        // Fetch the exam, validating enrollment AND time window constraints
         var exam = await _context.Exams
             .Include(e => e.Course)
             .Include(e => e.CoveredChapters)
                 .ThenInclude(c => c.Questions)
-            .Where(e => e.Id == examId && e.AssignedSections.Any(s => s.Students.Any(u => u.Id == studentId)))
+            .Where(e => e.Id == examId 
+                     && e.AssignedSections.Any(s => s.Students.Any(u => u.Id == studentId))
+                     && e.EndTime > DateTime.UtcNow) // FIX: Time window enforcement added
             .FirstOrDefaultAsync();
 
         if (exam == null)
-            return new StudentExamsResultDto<ExamPreTestDetailsDto> { IsSuccess = false, Message = "ExamNotFoundOrUnauthorized" };
+            return new StudentExamsResultDto<ExamPreTestDetailsDto> { IsSuccess = false, Message = "ExamNotFoundUnauthorizedOrExpired" };
 
-        // 2. Calculate total questions dynamically from the covered chapters
+        // Calculate total questions dynamically from the covered chapters
         var totalQuestions = exam.CoveredChapters.SelectMany(c => c.Questions).Count();
 
         var details = new ExamPreTestDetailsDto
