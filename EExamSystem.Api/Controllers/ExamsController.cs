@@ -30,7 +30,7 @@ public class ExamsController(AppDbContext context) : ControllerBase
     {
         var courseExists = await context.Courses.AnyAsync(c => c.Id == courseId);
         if (!courseExists) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "CourseNotFound", StatusCode = 404 });
 
         var exams = await context.Exams
             .Where(e => e.CourseId == courseId)
@@ -67,14 +67,14 @@ public class ExamsController(AppDbContext context) : ControllerBase
     public async Task<ActionResult<ServiceResponse<ExamDto>>> CreateExam(int courseId, [FromBody] ExamCreateDto newExam)
     {
         if (newExam.EndTime <= newExam.StartTime)
-            return BadRequest(new ErrorServiceResponse { Success = false, Message = "The exam's end time must be after its start time.", StatusCode = 400 });
+            return BadRequest(new ErrorServiceResponse { Success = false, Message = "InvalidExamTimeRange", StatusCode = 400 });
             
         if (newExam.PassingScore > newExam.MaxScore)
-            return BadRequest(new ErrorServiceResponse { Success = false, Message = "The passing score cannot be higher than the maximum score.", StatusCode = 400 });
+            return BadRequest(new ErrorServiceResponse { Success = false, Message = "InvalidPassingScore", StatusCode = 400 });
 
         var courseExists = await context.Courses.AnyAsync(c => c.Id == courseId);
         if (!courseExists) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "CourseNotFound", StatusCode = 404 });
 
         var exam = new Exam
         {
@@ -102,7 +102,7 @@ public class ExamsController(AppDbContext context) : ControllerBase
             CreatedAt = exam.CreatedAt
         };
 
-        return CreatedAtAction(nameof(GetExam), new { id = exam.Id }, new ServiceResponse<ExamDto> { Data = createdDto, Message = "Exam created successfully.", StatusCode = 201 });
+        return CreatedAtAction(nameof(GetExam), new { id = exam.Id }, new ServiceResponse<ExamDto> { Data = createdDto, Message = "ExamCreatedSuccess", StatusCode = 201 });
     }
 
     /// <summary>
@@ -133,7 +133,7 @@ public class ExamsController(AppDbContext context) : ControllerBase
             .FirstOrDefaultAsync();
 
         if (exam == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Exam with ID {id} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ExamNotFound", StatusCode = 404 });
             
         return Ok(new ServiceResponse<ExamDto> { Data = exam });
     }
@@ -154,14 +154,14 @@ public class ExamsController(AppDbContext context) : ControllerBase
     public async Task<ActionResult<ServiceResponse<bool>>> UpdateExam(int id, [FromBody] ExamCreateDto updatedExam)
     {
         if (updatedExam.EndTime <= updatedExam.StartTime)
-            return BadRequest(new ErrorServiceResponse { Success = false, Message = "The exam's end time must be after its start time.", StatusCode = 400 });
+            return BadRequest(new ErrorServiceResponse { Success = false, Message = "InvalidExamTimeRange", StatusCode = 400 });
             
         if (updatedExam.PassingScore > updatedExam.MaxScore)
-            return BadRequest(new ErrorServiceResponse { Success = false, Message = "The passing score cannot be higher than the maximum score.", StatusCode = 400 });
+            return BadRequest(new ErrorServiceResponse { Success = false, Message = "InvalidPassingScore", StatusCode = 400 });
 
         var exam = await context.Exams.FindAsync(id);
         if (exam == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Exam with ID {id} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ExamNotFound", StatusCode = 404 });
 
         exam.Title = updatedExam.Title;
         exam.StartTime = updatedExam.StartTime;
@@ -171,7 +171,7 @@ public class ExamsController(AppDbContext context) : ControllerBase
         exam.PassingScore = updatedExam.PassingScore;
 
         await context.SaveChangesAsync();
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Exam updated successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "ExamUpdatedSuccess" });
     }
 
     /// <summary>
@@ -188,11 +188,11 @@ public class ExamsController(AppDbContext context) : ControllerBase
     {
         var exam = await context.Exams.FindAsync(id);
         if (exam == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Exam with ID {id} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "ExamNotFound", StatusCode = 404 });
 
         context.Exams.Remove(exam);
         await context.SaveChangesAsync();
 
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Exam deleted successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "ExamDeletedSuccess" });
     }
 }

@@ -61,7 +61,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
 
         if (course == null)
         {
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "CourseNotFound", StatusCode = 404 });
         }
 
         return Ok(new ServiceResponse<CourseDto> { Data = course });
@@ -99,7 +99,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
         return CreatedAtAction(
             nameof(GetCourse),
             new { courseId = createdCourseDto.Id },
-            new ServiceResponse<CourseDto> { Data = createdCourseDto, Message = "Course created successfully.", StatusCode = 201 }
+            new ServiceResponse<CourseDto> { Data = createdCourseDto, Message = "CourseCreatedSuccess", StatusCode = 201 }
         );
     }
 
@@ -122,14 +122,14 @@ public class CoursesController(AppDbContext context) : ControllerBase
         
         if (existingCourse == null)
         {
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "CourseNotFound", StatusCode = 404 });
         }
         existingCourse.Code = updatedCourse.Code;
         existingCourse.Name = updatedCourse.Name;
 
         await context.SaveChangesAsync();
 
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Course updated successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "CourseUpdatedSuccess" });
     }
     
     /// <summary>
@@ -148,13 +148,13 @@ public class CoursesController(AppDbContext context) : ControllerBase
         
         if (existingCourse == null)
         {
-            return NotFound(new ErrorServiceResponse { Success = false, Message = $"Course with ID {courseId} was not found.", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Success = false, Message = "CourseNotFound", StatusCode = 404 });
         }
 
         context.Courses.Remove(existingCourse);
 
         await context.SaveChangesAsync();
 
-        return Ok(new ServiceResponse<bool> { Data = true, Message = "Course deleted successfully." });
+        return Ok(new ServiceResponse<bool> { Data = true, Message = "CourseDeletedSuccess" });
     }
 }
