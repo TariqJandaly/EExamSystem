@@ -18,4 +18,6 @@ public class UserCreateDto
     [DataType(DataType.Password, ErrorMessage = "PasswordInvalidFormat")]
     public string Password { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "RolesRequired")]
+    public IEnumerable<string> Roles { get; set; } = new List<string>();
 }
