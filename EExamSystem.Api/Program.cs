@@ -131,16 +131,13 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Register authentication service
+// Register services
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-// Register testbank service
 builder.Services.AddScoped<ITestbankService, TestbankService>();
-
 builder.Services.AddScoped<ISectionService, SectionService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IExamAssignmentService, ExamAssignmentService>();
-
+builder.Services.AddScoped<IStudentExamsService, StudentExamsService>();
 
 var app = builder.Build();
 
