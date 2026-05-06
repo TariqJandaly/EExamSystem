@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace EExamSystem.Api.Controllers;
 
 /// <summary>
-/// Manages the creation, retrieval, updating, and deletion of exam questions and their associated options.
+/// Manages the creation, retrieval, updating, and deletion of testbank questions and their multiple-choice options.
 /// </summary>
 [Authorize]
 [ApiController]
@@ -17,11 +17,17 @@ namespace EExamSystem.Api.Controllers;
 public class QuestionsController(AppDbContext context) : ControllerBase
 {
     /// <summary>
-    /// Retrieves all questions and their associated options for a specific testbank chapter.
+    /// Retrieves all questions and their options for a specific testbank chapter.
     /// </summary>
     /// <param name="testbankChapterId">The ID of the chapter containing the questions.</param>
-    /// <returns>A list of QuestionDto objects.</returns>
-    /// <response code="200">Returns the list of questions successfully.</response>
+    /// <returns>A <see cref="ServiceResponse{T}"/> containing a list of <see cref="QuestionDto"/>.</returns>
+    /// <response code="200">Successfully retrieved the question list.</response>
+    /// <response code="404">
+    /// The chapter was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>ChapterNotFound</c> – No chapter exists with the given ID.</item>
+    /// </list>
+    /// </response>
     [HttpGet("chapters/{testbankChapterId}/questions")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<QuestionDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -29,7 +35,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     {
         var chapterExists = await context.TestbankChapters.AnyAsync(c => c.Id == testbankChapterId);
         if (!chapterExists)
-            return NotFound(new ErrorServiceResponse { Success = false, Message = "ChapterNotFound", StatusCode = 404 });
+            return NotFound(new ErrorServiceResponse { Message = "ChapterNotFound", StatusCode = 404 });
 
         var questions = await context.Questions
             .Include(q => q.Options)
@@ -50,16 +56,26 @@ public class QuestionsController(AppDbContext context) : ControllerBase
 
         return Ok(new ServiceResponse<IEnumerable<QuestionDto>> { Data = questions });
     }
-    
+
     /// <summary>
-    /// Creates a new question along with its multiple-choice options in a specific chapter.
+    /// Creates a new question with multiple-choice options inside a specific chapter.
     /// </summary>
     /// <param name="testbankChapterId">The ID of the chapter where the question will be created.</param>
-    /// <param name="newQuestion">The question and options payload.</param>
-    /// <returns>The newly created QuestionDto.</returns>
-    /// <response code="201">Returns the created question with generated IDs.</response>
-    /// <response code="400">If the payload fails validation.</response>
-    /// <response code="404">If the specified chapter does not exist.</response>
+    /// <param name="newQuestion">The question and options payload. See <see cref="QuestionCreateDto"/>.</param>
+    /// <returns>A <see cref="ServiceResponse{T}"/> containing the newly created <see cref="QuestionDto"/> with generated IDs.</returns>
+    /// <response code="201">
+    /// Question created successfully. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>QuestionCreatedSuccess</c> – The question and its options were persisted.</item>
+    /// </list>
+    /// </response>
+    /// <response code="400">The request payload failed model validation.</response>
+    /// <response code="404">
+    /// The parent chapter was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>ChapterNotFound</c> – No chapter exists with the given ID.</item>
+    /// </list>
+    /// </response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPost("chapters/{testbankChapterId}/questions")]
     [ProducesResponseType(typeof(ServiceResponse<QuestionDto>), StatusCodes.Status201Created)]
@@ -68,15 +84,14 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     public async Task<ActionResult<ServiceResponse<QuestionDto>>> CreateQuestion(int testbankChapterId, [FromBody] QuestionCreateDto newQuestion)
     {
         var chapterExists = await context.TestbankChapters.AnyAsync(c => c.Id == testbankChapterId);
-        if (!chapterExists) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = "ChapterNotFound", StatusCode = 404 });
+        if (!chapterExists)
+            return NotFound(new ErrorServiceResponse { Message = "ChapterNotFound", StatusCode = 404 });
 
         var question = new Question
         {
             TestbankChapterId = testbankChapterId,
             Content = newQuestion.Content,
             Points = newQuestion.Points,
-            
             Options = newQuestion.Options.Select(o => new QuestionOption
             {
                 Text = o.Text,
@@ -85,8 +100,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
         };
 
         context.Questions.Add(question);
-        
-        await context.SaveChangesAsync(); 
+        await context.SaveChangesAsync();
 
         var createdDto = new QuestionDto
         {
@@ -101,16 +115,22 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             }).ToList()
         };
 
-        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, new ServiceResponse<QuestionDto> { Data = createdDto, Message = "QuestionCreatedSuccess", StatusCode = 201 });
+        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id },
+            new ServiceResponse<QuestionDto> { Data = createdDto, Message = "QuestionCreatedSuccess", StatusCode = 201 });
     }
-    
+
     /// <summary>
-    /// Retrieves a specific question and its options by ID.
+    /// Retrieves a specific question and all its options by ID.
     /// </summary>
     /// <param name="id">The unique identifier of the question.</param>
-    /// <returns>A single QuestionDto.</returns>
-    /// <response code="200">Returns the requested question.</response>
-    /// <response code="404">If the question does not exist.</response>
+    /// <returns>A <see cref="ServiceResponse{T}"/> containing the matching <see cref="QuestionDto"/>.</returns>
+    /// <response code="200">Successfully retrieved the question.</response>
+    /// <response code="404">
+    /// The question was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>QuestionNotFound</c> – No question exists with the given ID.</item>
+    /// </list>
+    /// </response>
     [HttpGet("questions/{id}")]
     [ProducesResponseType(typeof(ServiceResponse<QuestionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -133,20 +153,34 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             })
             .FirstOrDefaultAsync();
 
-        if (question == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = "QuestionNotFound", StatusCode = 404 });
-            
+        if (question == null)
+            return NotFound(new ErrorServiceResponse { Message = "QuestionNotFound", StatusCode = 404 });
+
         return Ok(new ServiceResponse<QuestionDto> { Data = question });
     }
-    
+
     /// <summary>
-    /// Updates an existing question. Replaces all existing options with the newly provided ones.
+    /// Updates an existing question's content, points, and options.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Warning:</b> This is a full replacement. All existing options are deleted and recreated from the provided payload.
+    /// </remarks>
     /// <param name="id">The ID of the question to update.</param>
-    /// <param name="updatedQuestion">The updated question and options payload.</param>
-    /// <response code="200">Successfully updated the question.</response>
-    /// <response code="400">If the payload fails validation.</response>
-    /// <response code="404">If the question does not exist.</response>
+    /// <param name="updatedQuestion">The updated question and options payload. See <see cref="QuestionCreateDto"/>.</param>
+    /// <returns>A <see cref="ServiceResponse{T}"/> with <c>Data: true</c> on success.</returns>
+    /// <response code="200">
+    /// Question updated successfully. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>QuestionUpdatedSuccess</c> – The question and its options were replaced and persisted.</item>
+    /// </list>
+    /// </response>
+    /// <response code="400">The request payload failed model validation.</response>
+    /// <response code="404">
+    /// The question was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>QuestionNotFound</c> – No question exists with the given ID.</item>
+    /// </list>
+    /// </response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPut("questions/{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
@@ -158,14 +192,13 @@ public class QuestionsController(AppDbContext context) : ControllerBase
             .Include(q => q.Options)
             .FirstOrDefaultAsync(q => q.Id == id);
 
-        if (question == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = "QuestionNotFound", StatusCode = 404 });
+        if (question == null)
+            return NotFound(new ErrorServiceResponse { Message = "QuestionNotFound", StatusCode = 404 });
 
         question.Content = updatedQuestion.Content;
         question.Points = updatedQuestion.Points;
 
         context.QuestionOptions.RemoveRange(question.Options);
-        
         question.Options = updatedQuestion.Options.Select(o => new QuestionOption
         {
             Text = o.Text,
@@ -175,13 +208,27 @@ public class QuestionsController(AppDbContext context) : ControllerBase
         await context.SaveChangesAsync();
         return Ok(new ServiceResponse<bool> { Data = true, Message = "QuestionUpdatedSuccess" });
     }
-    
+
     /// <summary>
-    /// Deletes a specific question and cascades the deletion to all its options.
+    /// Permanently deletes a question and all its associated options.
     /// </summary>
+    /// <remarks>
+    /// ⚠️ <b>Warning:</b> This is a cascading delete. All options belonging to this question will be permanently removed.
+    /// </remarks>
     /// <param name="id">The ID of the question to delete.</param>
-    /// <response code="200">Successfully deleted the question.</response>
-    /// <response code="404">If the question does not exist.</response>
+    /// <returns>A <see cref="ServiceResponse{T}"/> with <c>Data: true</c> on success.</returns>
+    /// <response code="200">
+    /// Question deleted successfully. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>QuestionDeletedSuccess</c> – The question and all its options were removed.</item>
+    /// </list>
+    /// </response>
+    /// <response code="404">
+    /// The question was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>QuestionNotFound</c> – No question exists with the given ID.</item>
+    /// </list>
+    /// </response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpDelete("questions/{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
@@ -189,8 +236,8 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     public async Task<ActionResult<ServiceResponse<bool>>> DeleteQuestion(int id)
     {
         var question = await context.Questions.FindAsync(id);
-        if (question == null) 
-            return NotFound(new ErrorServiceResponse { Success = false, Message = "QuestionNotFound", StatusCode = 404 });
+        if (question == null)
+            return NotFound(new ErrorServiceResponse { Message = "QuestionNotFound", StatusCode = 404 });
 
         context.Questions.Remove(question);
         await context.SaveChangesAsync();
