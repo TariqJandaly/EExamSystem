@@ -10,11 +10,13 @@ public class UserService : IUserService
 {
     private readonly AppDbContext _context;
     private readonly UserManager<User> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
-    public UserService(AppDbContext context, UserManager<User> userManager)
+    public UserService(AppDbContext context, UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
     {
         _context = context;
         _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     public async Task<ServiceResponse<List<UserDto>>> GetAllUsersAsync()
@@ -221,6 +223,33 @@ public class UserService : IUserService
             };
         }
 
+        // Check if roles exist
+        foreach (var role in userRolesDto.Roles)
+        {
+            if (!await _roleManager.RoleExistsAsync(role))
+            {
+                return new ServiceResponse<UserRolesDto>
+                {
+                    Success = false,
+                    Message = $"RoleNotFound",
+                    StatusCode = 400
+                };
+            }
+        }
+
+        // check if user already has any of the roles
+        var userRoles = await _userManager.GetRolesAsync(user);
+        var duplicateRoles = userRolesDto.Roles.Intersect(userRoles).ToList();
+        if (duplicateRoles.Any())
+        {
+            return new ServiceResponse<UserRolesDto>
+            {
+                Success = false,
+                Message = $"UserAlreadyHasRoles: {string.Join(", ", duplicateRoles)}",
+                StatusCode = 400
+            };
+        }
+
         var result = await _userManager.AddToRolesAsync(user, userRolesDto.Roles);
         if (!result.Succeeded)
         {
@@ -258,6 +287,20 @@ public class UserService : IUserService
                 Message = "UserNotFound",
                 StatusCode = 404
             };
+        }
+
+        // Check if roles exist        
+        foreach (var role in userRolesDto.Roles)
+        {
+            if (!await _roleManager.RoleExistsAsync(role))
+            {
+                return new ServiceResponse<UserRolesDto>
+                {
+                    Success = false,
+                    Message = $"RoleNotFound",
+                    StatusCode = 400
+                };
+            }
         }
 
         var result = await _userManager.RemoveFromRolesAsync(user, userRolesDto.Roles);
