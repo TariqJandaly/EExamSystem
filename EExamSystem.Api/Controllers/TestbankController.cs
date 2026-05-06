@@ -85,7 +85,7 @@ public class TestbankController : ControllerBase
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpDelete("{id}")]
     [Authorize(Roles = "Chair,Admin")]
-    [ProducesResponseType(typeof(ServiceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTestbank(int id)
     {
