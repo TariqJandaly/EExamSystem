@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using EExamSystem.Shared.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace EExamSystem.Api.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User>(options)
 {
-    public DbSet<User> Users { get; set; }
     public DbSet<Course> Courses { get; set; }
     public DbSet<Section> Sections { get; set; }
     public DbSet<Testbank> Testbanks { get; set; }
@@ -18,14 +19,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasDefaultSchema("public");
+
         base.OnModelCreating(modelBuilder);
         
-        modelBuilder.Entity<User>()
-            .HasIndex(u => u.Email)
-            .IsUnique();
+        modelBuilder.Entity<IdentityRole>().HasData(
+            new IdentityRole { Id = "1", Name = "User", NormalizedName = "USER", ConcurrencyStamp = "static-1" },
+            new IdentityRole { Id = "2", Name = "Student", NormalizedName = "STUDENT", ConcurrencyStamp = "static-2" },
+            new IdentityRole { Id = "3", Name = "Instructor", NormalizedName = "INSTRUCTOR", ConcurrencyStamp = "static-3" },
+            new IdentityRole { Id = "4", Name = "Admin", NormalizedName = "ADMIN", ConcurrencyStamp = "static-4" }
+        );
         
-        modelBuilder.Entity<User>()
-            .Property(u => u.Role)
-            .HasConversion<string>();
+        // Prevent duplicate sessions
+        modelBuilder.Entity<StudentExamSession>().HasIndex(s => new { s.StudentId, s.ExamId }).IsUnique();
+        // Prevent duplicate answers
+        modelBuilder.Entity<StudentAnswer>().HasIndex(a => new { a.SessionId, a.QuestionId }).IsUnique();
     }
 }
