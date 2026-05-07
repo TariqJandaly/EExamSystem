@@ -148,6 +148,28 @@ public class UserController : ControllerBase
     }
 
     /// <summary>
+    /// Retrieves the list of roles assigned to a specific user account.
+    /// </summary>
+    /// <param name="id">The GUID of the user whose roles to retrieve.</param>
+    /// <returns>A <see cref="ServiceResponse{T}"/> containing the list of roles.</returns>
+    /// <response code="200">Successfully retrieved the user's roles.</response>
+    /// <response code="404">
+    /// The user was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>UserNotFound</c> – No account exists with the given ID.</item>
+    /// </list>
+    /// </response>
+    [HttpGet("{id}/roles")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
+    [ProducesResponseType(typeof(ServiceResponse<UserRolesDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetUserRolesAsync(string id)
+    {
+        var result = await _userService.GetUserRolesAsync(id);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    /// <summary>
     /// Assigns one or more roles to a user account.
     /// </summary>
     /// <param name="id">The GUID of the user to assign roles to.</param>
@@ -165,9 +187,9 @@ public class UserController : ControllerBase
     ///   <item><c>UserNotFound</c> – No account exists with the given ID.</item>
     /// </list>
     /// </response>
-    [HttpPost("{id}/roles")]
+    [HttpPost("{id}/roles/add")]
     [Authorize(Roles = "CHAIR,ADMIN")]
-    [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ServiceResponse<UserRolesDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddRolesToUserAsync(string id, [FromBody] UserRolesDto userRolesDto)
     {
@@ -193,9 +215,9 @@ public class UserController : ControllerBase
     ///   <item><c>UserNotFound</c> – No account exists with the given ID.</item>
     /// </list>
     /// </response>
-    [HttpDelete("{id}/roles")]
+    [HttpPost("{id}/roles/remove")]
     [Authorize(Roles = "CHAIR,ADMIN")]
-    [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ServiceResponse<UserRolesDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveRolesFromUserAsync(string id, [FromBody] UserRolesDto userRolesDto)
     {

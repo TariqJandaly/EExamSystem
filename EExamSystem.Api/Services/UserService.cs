@@ -96,7 +96,26 @@ public class UserService : IUserService
         }
 
         // add roles
-        await _userManager.AddToRolesAsync(user, userCreateDto.Roles);
+        var roleResult = await _userManager.AddToRolesAsync(user, userCreateDto.Roles);
+
+        if (!roleResult.Succeeded)
+        {
+            var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
+
+            // Rollback user creation if role assignment fails
+            var deleteResult = await _userManager.DeleteAsync(user);
+            if (!deleteResult.Succeeded)
+            {
+                var deleteErrors = string.Join(", ", deleteResult.Errors.Select(e => e.Description));
+                errors = $"{errors}, RollbackFailed: {deleteErrors}";
+            }
+            return new ServiceResponse<UserDto>
+            {
+                Success = false,
+                Message = errors,
+                StatusCode = 400
+            };
+        }
 
         return new ServiceResponse<UserDto>
         {
