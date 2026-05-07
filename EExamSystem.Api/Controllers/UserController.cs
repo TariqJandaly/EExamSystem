@@ -33,7 +33,7 @@ public class UserController : ControllerBase
     /// </list>
     /// </response>
     [HttpGet]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<List<UserDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetAllUsersAsync()
@@ -55,7 +55,7 @@ public class UserController : ControllerBase
     /// </list>
     /// </response>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUserAsync(string id)
@@ -83,7 +83,7 @@ public class UserController : ControllerBase
     /// </list>
     /// </response>
     [HttpPost]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateUserAsync([FromBody] UserCreateDto userCreateDto)
@@ -110,7 +110,7 @@ public class UserController : ControllerBase
     /// </list>
     /// </response>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteUserAsync(string id)
@@ -138,7 +138,7 @@ public class UserController : ControllerBase
     /// </list>
     /// </response>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateUserAsync(string id, [FromBody] UserCreateDto userCreateDto)
@@ -166,7 +166,7 @@ public class UserController : ControllerBase
     /// </list>
     /// </response>
     [HttpPost("{id}/roles")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddRolesToUserAsync(string id, [FromBody] UserRolesDto userRolesDto)
@@ -194,7 +194,7 @@ public class UserController : ControllerBase
     /// </list>
     /// </response>
     [HttpDelete("{id}/roles")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveRolesFromUserAsync(string id, [FromBody] UserRolesDto userRolesDto)
@@ -222,7 +222,7 @@ public class UserController : ControllerBase
     /// </list>
     /// </response>
     [HttpPost("{id}/change-password")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangeUserPasswordAsync(string id, [FromBody] UserChangePasswordDto changePasswordDto)

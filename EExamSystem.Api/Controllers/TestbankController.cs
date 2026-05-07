@@ -33,7 +33,7 @@ public class TestbankController : ControllerBase
     /// </list>
     /// </response>
     [HttpGet]
-    [Authorize(Roles = "Chair,Admin,Instructor")]
+    [Authorize(Roles = "CHAIR,ADMIN,INSTRUCTOR")]
     [ProducesResponseType(typeof(ServiceResponse<List<TestbankDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetAllTestbanks()
@@ -55,7 +55,7 @@ public class TestbankController : ControllerBase
     /// </list>
     /// </response>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Chair,Admin,Instructor,Student")]
+    [Authorize(Roles = "CHAIR,ADMIN,INSTRUCTOR,STUDENT")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTestbank(int id)
@@ -82,7 +82,7 @@ public class TestbankController : ControllerBase
     /// </list>
     /// </response>
     [HttpPost]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTestbank([FromBody] TestbankCreateDto testbankCreateDto)
@@ -112,7 +112,7 @@ public class TestbankController : ControllerBase
     /// </list>
     /// </response>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTestbank(int id)
@@ -146,7 +146,7 @@ public class TestbankController : ControllerBase
     /// </list>
     /// </response>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Chair,Admin,Instructor")]
+    [Authorize(Roles = "CHAIR,ADMIN,INSTRUCTOR")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

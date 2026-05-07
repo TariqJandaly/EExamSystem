@@ -1,111 +1,314 @@
-@page "/exams/{Id}"
+@page "/exams/{Id:int}"
+@attribute [Authorize(Roles = "STUDENT")]
+@inject ApiClient Api
+@inject LanguageService Lang
+@inject NavigationManager Navigation
+@implements IDisposable
+@rendermode InteractiveServer
 
-<PageTitle>Take Exam</PageTitle>
+<PageTitle>@(details?.Title ?? Lang.T("exams.manage.title"))</PageTitle>
 
 <div class="max-w-3xl mx-auto px-4 py-8">
 
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-primary">Midterm Exam</h1>
-            <p class="text-sm text-secondary">CS301 - Algorithms</p>
+    @if (errorMessage is not null)
+    {
+        <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">@errorMessage</div>
+    }
+
+    @if (!isLoaded)
+    {
+        <p class="text-secondary text-sm">@Lang.T("common.loading.exam")</p>
+    }
+    else if (details is null)
+    {
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-6 text-red-700 text-sm">
+            @Lang.T("exam.notfound")
         </div>
-        <div class="text-right">
-            <div class="text-2xl font-mono font-bold @(timeLeft < 300 ? "text-red-500" : "text-primary")">
-                @FormatTime(timeLeft)
+        <a href="/exams" class="inline-block mt-4 text-sm text-secondary hover:text-primary">@Lang.T("common.back.exams")</a>
+    }
+    else if (phase == Phase.Lobby)
+    {
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-primary mb-1">@details.Title</h1>
+            <p class="text-secondary text-sm">@details.CourseName</p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white border border-brand-4 rounded-2xl p-5 shadow-sm">
+                <p class="text-xs text-secondary uppercase tracking-wide mb-1">@Lang.T("exam.detail.duration")</p>
+                <p class="text-2xl font-bold text-primary">@details.DurationMinutes <span class="text-sm font-normal">@Lang.T("common.min")</span></p>
             </div>
-            <p class="text-xs text-secondary">remaining</p>
+            <div class="bg-white border border-brand-4 rounded-2xl p-5 shadow-sm">
+                <p class="text-xs text-secondary uppercase tracking-wide mb-1">@Lang.T("exam.detail.questions")</p>
+                <p class="text-2xl font-bold text-primary">@details.TotalQuestions</p>
+            </div>
+            <div class="bg-white border border-brand-4 rounded-2xl p-5 shadow-sm">
+                <p class="text-xs text-secondary uppercase tracking-wide mb-1">@Lang.T("exam.detail.maxscore")</p>
+                <p class="text-2xl font-bold text-primary">@details.MaxScore</p>
+            </div>
+            <div class="bg-white border border-brand-4 rounded-2xl p-5 shadow-sm">
+                <p class="text-xs text-secondary uppercase tracking-wide mb-1">@Lang.T("exam.detail.passing")</p>
+                <p class="text-2xl font-bold text-primary">@details.PassingScore</p>
+            </div>
+            <div class="bg-white border border-brand-4 rounded-2xl p-5 shadow-sm col-span-2">
+                <p class="text-xs text-secondary uppercase tracking-wide mb-1">@Lang.T("exam.detail.schedule")</p>
+                <p class="text-sm font-medium text-foreground">
+                    @details.StartTime.ToLocalTime().ToString("MMM d, h:mm tt") —
+                    @details.EndTime.ToLocalTime().ToString("h:mm tt")
+                </p>
+            </div>
         </div>
-    </div>
 
-    <div class="w-full bg-brand-4 rounded-full h-1.5 mb-8">
-        <div class="bg-primary h-1.5 rounded-full transition-all"
-             style="width: @((currentQuestion + 1) * 100 / questions.Count)%"></div>
-    </div>
+        @if (questions.Count == 0 && questionsLoaded)
+        {
+            <div class="mb-6 px-4 py-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm">
+                @Lang.T("exam.noquestions")
+            </div>
+        }
 
-    <div class="bg-white border border-brand-4 rounded-2xl p-8 shadow-sm mb-6">
-        <p class="text-xs font-medium text-secondary mb-4">Question @(currentQuestion + 1) of @questions.Count</p>
-        <h2 class="text-lg font-semibold text-foreground mb-6">@questions[currentQuestion].Text</h2>
-
-        <div class="flex flex-col gap-3">
-            @for (int i = 0; i < questions[currentQuestion].Options.Length; i++)
+        <div class="flex gap-3">
+            @if (questions.Count > 0)
             {
-                var idx = i;
-                var option = questions[currentQuestion].Options[i];
-                var isSelected = answers.ContainsKey(currentQuestion) && answers[currentQuestion] == idx;
+                <button @onclick="StartExam"
+                        class="px-6 py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-primary-light transition-colors">
+                    @Lang.T("exam.start.btn")
+                </button>
+            }
+            <a href="/exams"
+               class="inline-block px-6 py-2.5 rounded-lg border border-brand-4 text-sm text-secondary hover:bg-brand-5 transition-colors">
+                @Lang.T("common.back.exams")
+            </a>
+        </div>
+    }
+    else if (phase == Phase.Taking)
+    {
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-xl font-bold text-primary">@details.Title</h1>
+                <p class="text-xs text-secondary">@string.Format(Lang.T("exam.question.of"), currentIndex + 1, questions.Count)</p>
+            </div>
+            <div class="text-right">
+                <div class="text-2xl font-mono font-bold @(timeLeft < 300 ? "text-red-500" : "text-primary")">
+                    @FormatTime(timeLeft)
+                </div>
+                <p class="text-xs text-secondary">@Lang.T("exam.remaining")</p>
+            </div>
+        </div>
 
-                <button @onclick="() => SelectAnswer(idx)"
-                        class="w-full text-left px-5 py-3.5 rounded-xl border-2 text-sm font-medium transition-all
-                               @(isSelected ? "border-primary bg-brand-4 text-primary" : "border-brand-4 bg-brand-5 text-foreground hover:border-primary-light")">
-                    <span class="font-bold mr-3">@((char)('A' + idx)).</span> @option
+        <div class="w-full bg-brand-4 rounded-full h-1.5 mb-8">
+            <div class="bg-primary h-1.5 rounded-full transition-all"
+                 style="width: @((currentIndex + 1) * 100 / questions.Count)%"></div>
+        </div>
+
+        <div class="bg-white border border-brand-4 rounded-2xl p-8 shadow-sm mb-6">
+            <p class="text-xs font-medium text-secondary mb-3">
+                @questions[currentIndex].Points pt@(questions[currentIndex].Points != 1 ? "s" : "")
+            </p>
+            <h2 class="text-lg font-semibold text-foreground mb-6">@questions[currentIndex].Content</h2>
+
+            <div class="flex flex-col gap-3">
+                @foreach (var opt in questions[currentIndex].Options)
+                {
+                    var optId = opt.Id;
+                    var isSelected = answers.TryGetValue(currentIndex, out var sel) && sel == optId;
+                    <button @onclick="() => SelectAnswer(optId)"
+                            class="w-full text-left px-5 py-3.5 rounded-xl border-2 text-sm font-medium transition-all
+                                   @(isSelected ? "border-primary bg-brand-4 text-primary" : "border-brand-4 bg-brand-5 text-foreground hover:border-primary-light")">
+                        @opt.Text
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <button @onclick="Prev" disabled="@(currentIndex == 0)"
+                    class="px-5 py-2 rounded-lg border border-brand-4 text-sm font-medium text-foreground hover:bg-brand-4 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                @Lang.T("exam.prev")
+            </button>
+
+            <div class="flex gap-1.5 flex-wrap justify-center">
+                @for (int i = 0; i < questions.Count; i++)
+                {
+                    var idx = i;
+                    <button @onclick="() => currentIndex = idx"
+                            class="w-8 h-8 rounded-full text-xs font-medium transition-colors
+                                   @(i == currentIndex ? "bg-primary text-white" : answers.ContainsKey(i) ? "bg-brand-3 text-white" : "bg-brand-4 text-foreground")">
+                        @(i + 1)
+                    </button>
+                }
+            </div>
+
+            @if (currentIndex < questions.Count - 1)
+            {
+                <button @onclick="Next"
+                        class="px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors">
+                    @Lang.T("exam.next")
+                </button>
+            }
+            else
+            {
+                <button @onclick="SubmitExam"
+                        class="px-5 py-2 rounded-lg bg-brand-s1 text-white text-sm font-semibold hover:bg-secondary-light transition-colors">
+                    @Lang.T("exam.submit")
                 </button>
             }
         </div>
-    </div>
+    }
+    else if (phase == Phase.Results)
+    {
+        <div class="text-center py-8">
+            <div class="w-20 h-20 rounded-full @(passed ? "bg-green-100" : "bg-red-100") flex items-center justify-center mx-auto mb-6">
+                <span class="text-3xl">@(passed ? "✓" : "✗")</span>
+            </div>
+            <h1 class="text-2xl font-bold @(passed ? "text-green-700" : "text-red-600") mb-2">
+                @(passed ? Lang.T("exam.passed") : Lang.T("exam.notpassed"))
+            </h1>
+            <p class="text-secondary text-sm mb-8">@details.Title</p>
 
-    <div class="flex items-center justify-between">
-        <button @onclick="PrevQuestion" disabled="@(currentQuestion == 0)"
-                class="px-5 py-2 rounded-lg border border-brand-4 text-sm font-medium text-foreground hover:bg-brand-4 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-            Previous
-        </button>
+            <div class="grid grid-cols-3 gap-4 mb-8 max-w-sm mx-auto">
+                <div class="bg-white border border-brand-4 rounded-2xl p-4 shadow-sm">
+                    <p class="text-xs text-secondary mb-1">@Lang.T("exam.result.score")</p>
+                    <p class="text-2xl font-bold text-primary">@score</p>
+                </div>
+                <div class="bg-white border border-brand-4 rounded-2xl p-4 shadow-sm">
+                    <p class="text-xs text-secondary mb-1">@Lang.T("exam.result.max")</p>
+                    <p class="text-2xl font-bold text-primary">@details.MaxScore</p>
+                </div>
+                <div class="bg-white border border-brand-4 rounded-2xl p-4 shadow-sm">
+                    <p class="text-xs text-secondary mb-1">@Lang.T("exam.result.pass")</p>
+                    <p class="text-2xl font-bold text-primary">@details.PassingScore</p>
+                </div>
+            </div>
 
-        <div class="flex gap-1.5">
-            @for (int i = 0; i < questions.Count; i++)
-            {
-                var idx = i;
-                <button @onclick="() => currentQuestion = idx"
-                        class="w-8 h-8 rounded-full text-xs font-medium transition-colors
-                               @(i == currentQuestion ? "bg-primary text-white" : answers.ContainsKey(i) ? "bg-brand-3 text-white" : "bg-brand-4 text-foreground")">
-                    @(i + 1)
-                </button>
-            }
+            <p class="text-sm text-secondary mb-6">
+                @string.Format(Lang.T("exam.result.answered"), correctCount, questions.Count)
+            </p>
+
+            <a href="/exams"
+               class="inline-block px-6 py-2.5 rounded-lg bg-primary text-white font-semibold hover:bg-primary-light transition-colors">
+                @Lang.T("common.back.exams")
+            </a>
         </div>
-
-        @if (currentQuestion < questions.Count - 1)
-        {
-            <button @onclick="NextQuestion"
-                    class="px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors">
-                Next
-            </button>
-        }
-        else
-        {
-            <button @onclick="SubmitExam"
-                    class="px-5 py-2 rounded-lg bg-brand-s1 text-white text-sm font-semibold hover:bg-secondary-light transition-colors">
-                Submit
-            </button>
-        }
-    </div>
+    }
 </div>
 
 @code {
-    [Parameter] public string Id { get; set; } = "";
+    [Parameter] public int Id { get; set; }
 
-    private int currentQuestion = 0;
-    private int timeLeft = 5400; // 90 min in seconds
+    private enum Phase { Lobby, Taking, Results }
+    private Phase phase = Phase.Lobby;
+
+    private ExamPreTestDetailsDto? details;
+    private List<QuestionDto> questions = new();
+    private bool isLoaded = false;
+    private bool questionsLoaded = false;
+    private string? errorMessage;
+
+    private int currentIndex = 0;
     private Dictionary<int, int> answers = new();
+    private int timeLeft;
+    private System.Threading.Timer? timer;
 
-    private record Question(string Text, string[] Options);
+    private int score = 0;
+    private int correctCount = 0;
+    private bool passed = false;
 
-    private List<Question> questions = new()
+    protected override void OnInitialized() => Lang.OnChange += Refresh;
+    private void Refresh() => InvokeAsync(StateHasChanged);
+    public void Dispose() { Lang.OnChange -= Refresh; timer?.Dispose(); }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        new("What is the time complexity of binary search?",
-            new[] { "O(n)", "O(log n)", "O(n log n)", "O(1)" }),
-        new("Which data structure uses LIFO order?",
-            new[] { "Queue", "Stack", "Linked List", "Tree" }),
-        new("What does Big O notation measure?",
-            new[] { "Memory usage only", "Time only", "Upper bound of complexity", "Exact runtime" }),
-        new("Which sorting algorithm has O(n log n) worst case?",
-            new[] { "Bubble Sort", "Quick Sort", "Merge Sort", "Insertion Sort" }),
-        new("A complete binary tree with n nodes has height of:",
-            new[] { "O(n)", "O(log n)", "O(n²)", "O(1)" }),
-    };
+        if (!firstRender) return;
+        try
+        {
+            var http = await Api.CreateAsync();
+            var res = await http.GetFromJsonAsync<ServiceResponse<ExamPreTestDetailsDto>>(
+                $"/api/v1/studentexams/{Id}/details");
+            details = res?.Data;
 
-    private void SelectAnswer(int optionIdx) => answers[currentQuestion] = optionIdx;
-    private void NextQuestion() { if (currentQuestion < questions.Count - 1) currentQuestion++; }
-    private void PrevQuestion() { if (currentQuestion > 0) currentQuestion--; }
-    private void SubmitExam() { /* TODO: submit answers */ }
+            if (details is not null)
+                await LoadQuestions(http);
+        }
+        catch (Exception ex) { errorMessage = $"{Lang.T("err.load")}: {ex.Message}"; }
+        finally { isLoaded = true; StateHasChanged(); }
+    }
 
-    private string FormatTime(int seconds)
+    private async Task LoadQuestions(HttpClient http)
+    {
+        try
+        {
+            var chapterRes = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<ChapterDto>>>(
+                $"/api/v1/exams/{Id}/chapters");
+            var chapters = chapterRes?.Data?.ToList() ?? new();
+
+            var allQuestions = new List<QuestionDto>();
+            foreach (var ch in chapters)
+            {
+                var qRes = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<QuestionDto>>>(
+                    $"/api/v1/chapters/{ch.Id}/questions");
+                if (qRes?.Data is not null)
+                    allQuestions.AddRange(qRes.Data);
+            }
+
+            var rng = new Random();
+            questions = allQuestions.OrderBy(_ => rng.Next()).ToList();
+        }
+        catch { }
+        finally { questionsLoaded = true; }
+    }
+
+    private void StartExam()
+    {
+        timeLeft = details!.DurationMinutes * 60;
+        currentIndex = 0;
+        answers = new();
+        phase = Phase.Taking;
+
+        timer = new System.Threading.Timer(_ =>
+        {
+            if (timeLeft > 0) { timeLeft--; InvokeAsync(StateHasChanged); }
+            else InvokeAsync(SubmitExam);
+        }, null, 1000, 1000);
+    }
+
+    private void SelectAnswer(int optionId) => answers[currentIndex] = optionId;
+    private void Next() { if (currentIndex < questions.Count - 1) currentIndex++; }
+    private void Prev() { if (currentIndex > 0) currentIndex--; }
+
+    private Task SubmitExam()
+    {
+        timer?.Dispose();
+        timer = null;
+
+        correctCount = 0;
+        int totalPoints = 0;
+        foreach (var q in questions)
+        {
+            var idx = questions.IndexOf(q);
+            if (answers.TryGetValue(idx, out var selectedId))
+            {
+                var correct = q.Options.FirstOrDefault(o => o.IsCorrect);
+                if (correct is not null && correct.Id == selectedId)
+                {
+                    correctCount++;
+                    totalPoints += q.Points;
+                }
+            }
+        }
+
+        int totalPossible = questions.Sum(q => q.Points);
+        score = totalPossible > 0
+            ? (int)Math.Round((double)totalPoints / totalPossible * details!.MaxScore)
+            : 0;
+
+        passed = score >= details!.PassingScore;
+        phase = Phase.Results;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private static string FormatTime(int seconds)
     {
         var ts = TimeSpan.FromSeconds(seconds);
         return $"{ts.Hours:D2}:{ts.Minutes:D2}:{ts.Seconds:D2}";

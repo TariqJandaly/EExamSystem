@@ -13,9 +13,10 @@ public class EnrollmentService : IEnrollmentService
     private readonly AppDbContext _context;
     private readonly UserManager<User> _userManager;
 
-    public EnrollmentService(AppDbContext context)
+    public EnrollmentService(AppDbContext context, UserManager<User> userManager)
     {
         _context = context;
+        _userManager = userManager;
     }
 
     /// <summary>
@@ -40,7 +41,7 @@ public class EnrollmentService : IEnrollmentService
             return new EnrollmentResultDto<bool> { IsSuccess = false, Message = "StudentNotFound" };
         }
         
-        var isStudent = await _userManager.IsInRoleAsync(student, "Student");
+        var isStudent = await _userManager.IsInRoleAsync(student, "STUDENT");
         if (!isStudent)
         {
             return new EnrollmentResultDto<bool> { IsSuccess = false, Message = "InvalidUserRoleForEnrollment" };

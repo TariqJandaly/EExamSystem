@@ -1,0 +1,546 @@
+@page "/instructor/{CourseId:int}/exams"
+@attribute [Authorize(Roles = "INSTRUCTOR,CHAIR,ADMIN")]
+@inject LanguageService Lang
+@inject ApiClient Api
+@rendermode InteractiveServer
+
+<PageTitle>@Lang.T("exams.manage.title")</PageTitle>
+
+<div class="max-w-5xl mx-auto px-4 py-8">
+
+    <div class="flex items-center gap-2 text-sm text-secondary mb-6">
+        <a href="/instructor" class="hover:text-primary transition-colors">@Lang.T("instructor.title")</a>
+        <span>/</span>
+        <span class="text-foreground font-medium">Course #@CourseId — @Lang.T("exams.manage.title")</span>
+    </div>
+
+    <div class="flex items-start justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-primary">@Lang.T("exams.manage.title")</h1>
+            <p class="text-secondary mt-1">@Lang.T("exams.manage.subtitle")</p>
+        </div>
+        <button @onclick="OpenCreateForm"
+                class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors">
+            @Lang.T("exams.create")
+        </button>
+    </div>
+
+    @if (errorMessage is not null)
+    {
+        <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">@errorMessage</div>
+    }
+    @if (successMessage is not null)
+    {
+        <div class="mb-4 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">@successMessage</div>
+    }
+
+    @if (showCreateForm)
+    {
+        <div class="bg-white border border-primary rounded-2xl p-6 shadow-sm mb-6">
+            <h3 class="font-semibold text-foreground mb-5">
+                @(editingExamId.HasValue ? Lang.T("exams.form.edit") : Lang.T("exams.form.new"))
+            </h3>
+
+            <!-- Basic info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-secondary mb-1">@Lang.T("exams.title.label")</label>
+                    <input @bind="form.Title" placeholder="@Lang.T("exams.title.ph")"
+                           class="w-full px-3 py-2 rounded-lg border border-brand-4 bg-brand-5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-secondary mb-1">@Lang.T("exams.starttime")</label>
+                    <input type="datetime-local" @bind="form.StartTime"
+                           class="w-full px-3 py-2 rounded-lg border border-brand-4 bg-brand-5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-secondary mb-1">@Lang.T("exams.endtime")</label>
+                    <input type="datetime-local" @bind="form.EndTime"
+                           class="w-full px-3 py-2 rounded-lg border border-brand-4 bg-brand-5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-secondary mb-1">@Lang.T("exams.duration") (0–600)</label>
+                    <input type="number" @bind="form.DurationMinutes" min="0" max="600"
+                           class="w-full px-3 py-2 rounded-lg border border-brand-4 bg-brand-5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-secondary mb-1">@Lang.T("exams.maxscore")</label>
+                    <input type="number" @bind="form.MaxScore" min="1" max="1000"
+                           class="w-full px-3 py-2 rounded-lg border border-brand-4 bg-brand-5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-secondary mb-1">@Lang.T("exams.passingscore")</label>
+                    <input type="number" @bind="form.PassingScore" min="0" max="1000"
+                           class="w-full px-3 py-2 rounded-lg border border-brand-4 bg-brand-5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+            </div>
+
+            <!-- Chapter selection -->
+            <div class="mb-6">
+                <label class="block text-xs font-medium text-secondary mb-3">
+                    @Lang.T("exams.chapters.label")
+                </label>
+                @if (chaptersLoading)
+                {
+                    <p class="text-xs text-secondary">@Lang.T("common.loading.testbanks")</p>
+                }
+                else if (bankChapters.Count == 0)
+                {
+                    <p class="text-xs text-secondary">@Lang.T("exams.chapters.empty")</p>
+                }
+                else
+                {
+                    <div class="border border-brand-4 rounded-xl overflow-hidden">
+                        @foreach (var bank in bankChapters)
+                        {
+                            <div class="border-b border-brand-4 last:border-0">
+                                <div class="px-4 py-2 bg-brand-5 flex items-center gap-2">
+                                    <span class="text-xs font-semibold text-primary uppercase tracking-wide">@bank.BankName</span>
+                                    <span class="text-xs text-secondary">(@bank.Chapters.Count @(bank.Chapters.Count != 1 ? Lang.T("exams.chapter.plural") : Lang.T("exams.chapter.singular")))</span>
+                                </div>
+                                <div class="px-4 py-3 flex flex-col gap-2">
+                                    @if (bank.Chapters.Count == 0)
+                                    {
+                                        <p class="text-xs text-secondary italic">@Lang.T("exams.nochapters.bank")</p>
+                                    }
+                                    @foreach (var ch in bank.Chapters)
+                                    {
+                                        var chId = ch.Id;
+                                        <label class="flex items-center gap-3 cursor-pointer group">
+                                            <input type="checkbox"
+                                                   checked="@selectedChapterIds.Contains(chId)"
+                                                   @onchange="e => ToggleChapter(chId, (bool)e.Value!)"
+                                                   class="w-4 h-4 rounded accent-primary" />
+                                            <span class="text-sm text-foreground group-hover:text-primary transition-colors">
+                                                @ch.Name
+                                                @if (!string.IsNullOrWhiteSpace(ch.Description))
+                                                {
+                                                    <span class="text-xs text-secondary ml-1">— @ch.Description</span>
+                                                }
+                                            </span>
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    @if (selectedChapterIds.Count > 0)
+                    {
+                        <p class="text-xs text-primary mt-2">@string.Format(Lang.T("exams.chapters.selected"), selectedChapterIds.Count)</p>
+                    }
+                }
+            </div>
+
+            <div class="flex gap-3">
+                <button @onclick="SaveExam"
+                        class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors">
+                    @Lang.T("action.save")
+                </button>
+                <button @onclick="CloseForm"
+                        class="px-4 py-2 rounded-lg border border-brand-4 text-sm text-secondary hover:bg-brand-5 transition-colors">
+                    @Lang.T("action.cancel")
+                </button>
+            </div>
+        </div>
+    }
+
+    @if (!isLoaded)
+    {
+        <p class="text-secondary text-sm">@Lang.T("common.loading.exams")</p>
+    }
+    else if (exams.Count == 0)
+    {
+        <div class="text-center py-16 text-secondary border border-dashed border-brand-4 rounded-2xl">
+            <p class="font-medium">@Lang.T("exams.empty")</p>
+        </div>
+    }
+    else
+    {
+        <div class="flex flex-col gap-4">
+            @foreach (var exam in exams)
+            {
+                <div class="bg-white border border-brand-4 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="flex items-start justify-between px-6 py-4">
+                        <div>
+                            <h2 class="font-semibold text-foreground">@exam.Title</h2>
+                            <div class="flex items-center gap-4 text-xs text-secondary mt-1">
+                                <span>@exam.StartTime.ToLocalTime().ToString("MMM d, h:mm tt") → @exam.EndTime.ToLocalTime().ToString("h:mm tt")</span>
+                                <span>@exam.DurationMinutes min</span>
+                                <span>Max: @exam.MaxScore</span>
+                                <span>Pass: @exam.PassingScore</span>
+                            </div>
+                            <!-- Show assigned chapters summary -->
+                            @if (examChapterNames.TryGetValue(exam.Id, out var chNames) && chNames.Count > 0)
+                            {
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    @foreach (var name in chNames)
+                                    {
+                                        <span class="text-xs px-2 py-0.5 rounded-full bg-brand-4 text-primary">@name</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 ml-4">
+                            <button @onclick="() => StartEditExam(exam)"
+                                    class="text-xs text-secondary hover:text-primary transition-colors px-2 py-1 rounded hover:bg-brand-5">
+                                @Lang.T("action.edit")
+                            </button>
+                            <button @onclick="async () => await ToggleSectionPanel(exam.Id)"
+                                    class="text-xs px-2 py-1 rounded border border-brand-4 text-secondary hover:text-primary hover:border-primary transition-colors">
+                                @Lang.T("exams.sections")
+                            </button>
+                            @if (deletingExamId == exam.Id)
+                            {
+                                <span class="text-xs text-red-600 flex items-center gap-1">
+                                    @Lang.T("action.confirm")
+                                    <button @onclick="() => ConfirmDeleteExam(exam.Id)" class="underline ml-1">@Lang.T("action.yes")</button>
+                                    <button @onclick="() => deletingExamId = null" class="underline ml-1">@Lang.T("action.no")</button>
+                                </span>
+                            }
+                            else
+                            {
+                                <button @onclick="() => deletingExamId = exam.Id"
+                                        class="text-xs text-red-400 hover:text-red-600 transition-colors">
+                                    @Lang.T("action.delete")
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    @if (sectionPanelExamId == exam.Id)
+                    {
+                        <div class="border-t border-brand-5 px-6 py-4 bg-brand-5/30">
+                            <p class="text-xs font-medium text-secondary mb-3">@Lang.T("exams.sections")</p>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach (var sec in courseSections)
+                                {
+                                    var isAssigned = assignedSectionIds.Contains(sec.Id);
+                                    <button @onclick="() => ToggleSectionAssignment(exam.Id, sec.Id, isAssigned)"
+                                            class="text-xs px-3 py-1.5 rounded-full border transition-colors
+                                                   @(isAssigned ? "bg-primary text-white border-primary" : "border-brand-4 text-secondary hover:border-primary hover:text-primary")">
+                                        @sec.Name @(isAssigned ? "✓" : "")
+                                    </button>
+                                }
+                                @if (courseSections.Count == 0)
+                                {
+                                    <p class="text-xs text-secondary">@Lang.T("exams.nosections")</p>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int CourseId { get; set; }
+
+    private List<ExamDto> exams = new();
+    private List<SectionDto> courseSections = new();
+    private HashSet<int> assignedSectionIds = new();
+    // examId → list of assigned chapter names (for display)
+    private Dictionary<int, List<string>> examChapterNames = new();
+
+    private bool isLoaded = false;
+    private string? errorMessage;
+    private string? successMessage;
+
+    private bool showCreateForm = false;
+    private int? editingExamId;
+    private int? deletingExamId;
+    private int? sectionPanelExamId;
+
+    // Chapter selection state
+    private record BankWithChapters(string BankName, List<ChapterDto> Chapters);
+    private List<BankWithChapters> bankChapters = new();
+    private HashSet<int> selectedChapterIds = new();
+    private bool chaptersLoading = false;
+
+    private class ExamForm
+    {
+        public string Title { get; set; } = "";
+        public DateTime StartTime { get; set; } = DateTime.Now.AddDays(1);
+        public DateTime EndTime { get; set; } = DateTime.Now.AddDays(1).AddHours(2);
+        public int DurationMinutes { get; set; } = 90;
+        public int MaxScore { get; set; } = 100;
+        public int PassingScore { get; set; } = 60;
+    }
+    private ExamForm form = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            var http = await Api.CreateAsync();
+
+            var examRes = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<ExamDto>>>(
+                $"/api/v1/courses/{CourseId}/exams");
+            exams = examRes?.Data?.ToList() ?? new();
+
+            var sectionRes = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<SectionDto>>>(
+                $"/api/v1/sections/course/{CourseId}");
+            courseSections = sectionRes?.Data?.ToList() ?? new();
+
+            // Load chapter names assigned to each exam for display
+            await LoadAllExamChapterNames(http);
+        }
+        catch (Exception ex) { errorMessage = $"Failed to load: {ex.Message}"; }
+        finally { isLoaded = true; StateHasChanged(); }
+    }
+
+    private async Task LoadAllExamChapterNames(HttpClient http)
+    {
+        examChapterNames.Clear();
+        var tasks = exams.Select(async e =>
+        {
+            try
+            {
+                var res = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<ChapterDto>>>(
+                    $"/api/v1/exams/{e.Id}/chapters");
+                return (e.Id, Names: res?.Data?.Select(c => c.Name).ToList() ?? new());
+            }
+            catch { return (e.Id, Names: new List<string>()); }
+        });
+        var results = await Task.WhenAll(tasks);
+        foreach (var (id, names) in results)
+            examChapterNames[id] = names;
+    }
+
+    private async Task LoadBankChapters()
+    {
+        chaptersLoading = true;
+        bankChapters = new();
+        StateHasChanged();
+        try
+        {
+            var http = await Api.CreateAsync();
+            var bankRes = await http.GetFromJsonAsync<ServiceResponse<List<TestbankDto>>>(
+                "/api/v1/testbank");
+            var banks = bankRes?.Data?.Where(b => b.CourseId == CourseId).ToList() ?? new();
+
+            foreach (var bank in banks)
+            {
+                var chRes = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<ChapterDto>>>(
+                    $"/api/v1/testbanks/{bank.Id}/chapters");
+                var chapters = chRes?.Data?.ToList() ?? new();
+                bankChapters.Add(new BankWithChapters(bank.Name, chapters));
+            }
+        }
+        catch { }
+        finally { chaptersLoading = false; StateHasChanged(); }
+    }
+
+    private async Task OpenCreateForm()
+    {
+        editingExamId = null;
+        form = new();
+        selectedChapterIds = new();
+        showCreateForm = true;
+        errorMessage = null;
+        successMessage = null;
+        await LoadBankChapters();
+    }
+
+    private async Task StartEditExam(ExamDto exam)
+    {
+        editingExamId = exam.Id;
+        form = new()
+        {
+            Title = exam.Title,
+            StartTime = exam.StartTime.ToLocalTime(),
+            EndTime = exam.EndTime.ToLocalTime(),
+            DurationMinutes = exam.DurationMinutes,
+            MaxScore = exam.MaxScore,
+            PassingScore = exam.PassingScore
+        };
+        showCreateForm = true;
+        errorMessage = null;
+        successMessage = null;
+
+        // Pre-load currently assigned chapters
+        selectedChapterIds = new();
+        try
+        {
+            var http = await Api.CreateAsync();
+            var res = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<ChapterDto>>>(
+                $"/api/v1/exams/{exam.Id}/chapters");
+            if (res?.Data is not null)
+                selectedChapterIds = res.Data.Select(c => c.Id).ToHashSet();
+        }
+        catch { }
+
+        await LoadBankChapters();
+    }
+
+    private void CloseForm()
+    {
+        showCreateForm = false;
+        editingExamId = null;
+        form = new();
+        selectedChapterIds = new();
+        bankChapters = new();
+    }
+
+    private void ToggleChapter(int chapterId, bool add)
+    {
+        if (add) selectedChapterIds.Add(chapterId);
+        else selectedChapterIds.Remove(chapterId);
+    }
+
+    private async Task SaveExam()
+    {
+        if (string.IsNullOrWhiteSpace(form.Title)) { errorMessage = Lang.T("exam.err.title"); return; }
+        if (form.EndTime <= form.StartTime) { errorMessage = Lang.T("exam.err.endtime"); return; }
+        if (form.PassingScore > form.MaxScore) { errorMessage = Lang.T("exam.err.passscore"); return; }
+
+        errorMessage = null; successMessage = null;
+        var dto = new ExamCreateDto
+        {
+            Title = form.Title,
+            StartTime = form.StartTime.ToUniversalTime(),
+            EndTime = form.EndTime.ToUniversalTime(),
+            DurationMinutes = form.DurationMinutes,
+            MaxScore = form.MaxScore,
+            PassingScore = form.PassingScore
+        };
+
+        try
+        {
+            var http = await Api.CreateAsync();
+            bool isEdit = editingExamId.HasValue;
+            int examId;
+
+            if (isEdit)
+            {
+                examId = editingExamId!.Value;
+                var res = await http.PutAsJsonAsync($"/api/v1/exams/{examId}", dto);
+                if (!res.IsSuccessStatusCode)
+                {
+                    var err = await res.Content.ReadFromJsonAsync<ServiceResponse<object>>();
+                    errorMessage = err?.Message ?? Lang.T("err.save");
+                    return;
+                }
+            }
+            else
+            {
+                var res = await http.PostAsJsonAsync($"/api/v1/courses/{CourseId}/exams", dto);
+                if (!res.IsSuccessStatusCode)
+                {
+                    var err = await res.Content.ReadFromJsonAsync<ServiceResponse<object>>();
+                    errorMessage = err?.Message ?? Lang.T("err.save");
+                    return;
+                }
+                var created = await res.Content.ReadFromJsonAsync<ServiceResponse<ExamDto>>();
+                examId = created?.Data?.Id ?? 0;
+            }
+
+            // Sync chapter assignments
+            if (examId > 0)
+                await SyncChapters(http, examId);
+
+            CloseForm();
+            successMessage = isEdit ? "Exam updated." : "Exam created.";
+
+            // Reload exams + chapter name summaries
+            var examRes = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<ExamDto>>>(
+                $"/api/v1/courses/{CourseId}/exams");
+            exams = examRes?.Data?.ToList() ?? new();
+            await LoadAllExamChapterNames(http);
+            StateHasChanged();
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
+    }
+
+    private async Task SyncChapters(HttpClient http, int examId)
+    {
+        // Get currently assigned chapters on server
+        HashSet<int> current = new();
+        try
+        {
+            var res = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<ChapterDto>>>(
+                $"/api/v1/exams/{examId}/chapters");
+            if (res?.Data is not null)
+                current = res.Data.Select(c => c.Id).ToHashSet();
+        }
+        catch { }
+
+        // Remove deselected
+        foreach (var id in current.Where(id => !selectedChapterIds.Contains(id)))
+            await http.DeleteAsync($"/api/v1/exams/{examId}/chapters/{id}");
+
+        // Add newly selected
+        foreach (var id in selectedChapterIds.Where(id => !current.Contains(id)))
+            await http.PostAsync($"/api/v1/exams/{examId}/chapters/{id}", null);
+    }
+
+    private async Task ConfirmDeleteExam(int examId)
+    {
+        errorMessage = null; successMessage = null;
+        try
+        {
+            var http = await Api.CreateAsync();
+            var res = await http.DeleteAsync($"/api/v1/exams/{examId}");
+            if (res.IsSuccessStatusCode)
+            {
+                successMessage = "Exam deleted.";
+                exams.RemoveAll(e => e.Id == examId);
+                examChapterNames.Remove(examId);
+            }
+            else
+            {
+                var err = await res.Content.ReadFromJsonAsync<ServiceResponse<bool>>();
+                errorMessage = err?.Message ?? Lang.T("err.save");
+            }
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
+        finally { deletingExamId = null; StateHasChanged(); }
+    }
+
+    private async Task ToggleSectionPanel(int examId)
+    {
+        if (sectionPanelExamId == examId) { sectionPanelExamId = null; return; }
+        sectionPanelExamId = examId;
+        assignedSectionIds.Clear();
+        try
+        {
+            var http = await Api.CreateAsync();
+            var res = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<SectionDto>>>(
+                $"/api/v1/examassignments/exams/{examId}/sections");
+            if (res?.Data is not null)
+                assignedSectionIds = res.Data.Select(s => s.Id).ToHashSet();
+        }
+        catch { }
+        StateHasChanged();
+    }
+
+    private async Task ToggleSectionAssignment(int examId, int sectionId, bool isAssigned)
+    {
+        errorMessage = null;
+        try
+        {
+            var http = await Api.CreateAsync();
+            HttpResponseMessage res;
+            if (isAssigned)
+                res = await http.DeleteAsync($"/api/v1/examassignments/exams/{examId}/sections/{sectionId}");
+            else
+                res = await http.PostAsync($"/api/v1/examassignments/exams/{examId}/sections/{sectionId}", null);
+
+            if (res.IsSuccessStatusCode)
+            {
+                if (isAssigned) assignedSectionIds.Remove(sectionId);
+                else assignedSectionIds.Add(sectionId);
+                successMessage = isAssigned ? "Section unassigned." : "Section assigned.";
+            }
+            else
+            {
+                var err = await res.Content.ReadFromJsonAsync<ServiceResponse<bool>>();
+                errorMessage = err?.Message ?? Lang.T("err.save");
+            }
+        }
+        catch (Exception ex) { errorMessage = ex.Message; }
+        StateHasChanged();
+    }
+}

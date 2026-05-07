@@ -10,7 +10,7 @@ namespace EExamSystem.Api.Controllers;
 /// <summary>
 /// Provides the student dashboard and pre-test lobby endpoints. All routes are restricted to the Student role.
 /// </summary>
-[Authorize(Roles = "Student")]
+[Authorize(Roles = "STUDENT")]
 [ApiController]
 [Route("api/v1/[controller]")]
 public class StudentExamsController : ControllerBase
