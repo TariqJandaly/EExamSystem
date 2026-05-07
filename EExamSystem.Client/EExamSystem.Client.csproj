@@ -11,4 +11,8 @@
       <Folder Include="wwwroot\lib\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\EExamSystem.Shared\EExamSystem.Shared.csproj" />
+    </ItemGroup>
+
 </Project>

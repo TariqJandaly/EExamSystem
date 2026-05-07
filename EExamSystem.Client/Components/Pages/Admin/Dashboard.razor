@@ -1,5 +1,7 @@
 @page "/admin"
+@attribute [Authorize(Roles = "ADMIN,CHAIR")]
 @inject LanguageService Lang
+@inject ApiClient Api
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -12,110 +14,125 @@
         <p class="text-secondary mt-1">@Lang.T("admin.subtitle")</p>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        @foreach (var stat in stats)
-        {
-            <div class="bg-white border border-brand-4 rounded-2xl p-5 shadow-sm">
-                <p class="text-xs font-medium text-secondary uppercase tracking-wide mb-1">@stat.Label</p>
-                <p class="text-3xl font-bold text-primary">@stat.Value</p>
-                <p class="text-xs text-secondary mt-1">@stat.Sub</p>
+    <!-- Quick actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <a href="/admin/users"
+           class="flex items-center gap-4 bg-white border border-brand-4 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-primary-light transition-all group">
+            <div class="w-10 h-10 rounded-xl bg-brand-4 flex items-center justify-center text-primary font-bold text-lg group-hover:bg-primary group-hover:text-white transition-colors">M</div>
+            <div>
+                <p class="font-semibold text-foreground group-hover:text-primary transition-colors">@Lang.T("admin.users.title")</p>
+                <p class="text-xs text-secondary">Create, manage and assign roles</p>
             </div>
-        }
+        </a>
+        <a href="/admin/courses"
+           class="flex items-center gap-4 bg-white border border-brand-4 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-primary-light transition-all group">
+            <div class="w-10 h-10 rounded-xl bg-brand-4 flex items-center justify-center text-primary font-bold text-lg group-hover:bg-primary group-hover:text-white transition-colors">M</div>
+            <div>
+                <p class="font-semibold text-foreground group-hover:text-primary transition-colors">@Lang.T("admin.courses.title")</p>
+                <p class="text-xs text-secondary">Add, edit and remove courses</p>
+            </div>
+        </a>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    @if (errorMessage is not null)
+    {
+        <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">@errorMessage</div>
+    }
 
-        <div class="bg-white border border-brand-4 rounded-2xl p-6 shadow-sm">
-            <h2 class="font-semibold text-foreground mb-4">Active Exams</h2>
-            <div class="flex flex-col gap-3">
-                @foreach (var exam in activeExams)
-                {
-                    <div class="flex items-center justify-between py-2 border-b border-brand-5 last:border-0">
-                        <div>
-                            <p class="text-sm font-medium text-foreground">@exam.Title</p>
-                            <p class="text-xs text-secondary">@exam.Course</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm font-semibold text-primary">@exam.Online online</p>
-                            <p class="text-xs text-secondary">ends @exam.Ends</p>
-                        </div>
-                    </div>
-                }
-            </div>
+    @if (!isLoaded)
+    {
+        <p class="text-secondary text-sm">Loading dashboard...</p>
+    }
+    else
+    {
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            @foreach (var stat in stats)
+            {
+                <div class="bg-white border border-brand-4 rounded-2xl p-5 shadow-sm">
+                    <p class="text-xs font-medium text-secondary uppercase tracking-wide mb-1">@stat.Label</p>
+                    <p class="text-3xl font-bold text-primary">@stat.Value</p>
+                    <p class="text-xs text-secondary mt-1">@stat.Sub</p>
+                </div>
+            }
         </div>
 
         <div class="bg-white border border-brand-4 rounded-2xl p-6 shadow-sm">
-            <h2 class="font-semibold text-foreground mb-4">Recent Users</h2>
+            <h2 class="font-semibold text-foreground mb-4">All Users</h2>
             <div class="flex flex-col gap-3">
-                @foreach (var user in recentUsers)
+                @foreach (var user in users)
                 {
                     <div class="flex items-center justify-between py-2 border-b border-brand-5 last:border-0">
                         <div class="flex items-center gap-3">
                             <div class="w-8 h-8 rounded-full bg-brand-4 flex items-center justify-center text-primary font-bold text-sm">
-                                @user.Name[0]
+                                @(user.FullName.Length > 0 ? user.FullName[0] : '?')
                             </div>
                             <div>
-                                <p class="text-sm font-medium text-foreground">@user.Name</p>
+                                <p class="text-sm font-medium text-foreground">@user.FullName</p>
                                 <p class="text-xs text-secondary">@user.Email</p>
                             </div>
                         </div>
-                        <span class="text-xs px-2 py-0.5 rounded-full @RoleBadge(user.Role)">@user.Role</span>
+                        <div class="flex gap-1 flex-wrap justify-end">
+                            @foreach (var role in user.Roles)
+                            {
+                                <span class="text-xs px-2 py-0.5 rounded-full @RoleBadge(role)">@role</span>
+                            }
+                        </div>
                     </div>
                 }
             </div>
         </div>
-    </div>
-    
+    }
 </div>
 
 @code {
+    private record Stat(string Label, string Value, string Sub);
+
+    private List<Stat> stats = new();
+    private List<UserDto> users = new();
+    private bool isLoaded = false;
+    private string? errorMessage;
+
     protected override void OnInitialized() => Lang.OnChange += Refresh;
     private void Refresh() => InvokeAsync(StateHasChanged);
     public void Dispose() => Lang.OnChange -= Refresh;
 
-    private record Stat(string Label, string Value, string Sub);
-    private record ActiveExam(string Title, string Course, int Online, string Ends);
-    private record RecentUser(string Name, string Email, string Role);
-    private record UserRow(string Name, string Email, string Role, bool Active);
-
-    private List<Stat> stats = new()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        new("Total Exams Taken", "1,284", "+12 this week"),
-        new("Instructors", "48", "across 6 departments"),
-        new("Active Exams", "7", "right now"),
-        new("Courses", "93", "this semester"),
-    };
+        if (!firstRender) return;
+        try
+        {
+            var http = await Api.CreateAsync();
 
-    private List<ActiveExam> activeExams = new()
-    {
-        new("Midterm Exam", "CS301 - Algorithms", 34, "3:30 PM"),
-        new("Quiz 3", "MATH201 - Calculus", 61, "4:00 PM"),
-        new("Lab Practical", "CS101 - Intro to CS", 22, "5:00 PM"),
-    };
+            var userRes = await http.GetFromJsonAsync<ServiceResponse<List<UserDto>>>(
+                "/api/v1/user");
+            users = userRes?.Data ?? new();
 
-    private List<RecentUser> recentUsers = new()
-    {
-        new("Ali Hassan", "ali.h@uni.edu", "Student"),
-        new("Dr. Sara Malik", "s.malik@uni.edu", "Instructor"),
-        new("Omar Khalid", "o.khalid@uni.edu", "Student"),
-        new("Admin User", "admin@uni.edu", "Admin"),
-    };
+            var courseRes = await http.GetFromJsonAsync<ServiceResponse<IEnumerable<CourseDto>>>(
+                "/api/v1/courses");
+            var courseCount = courseRes?.Data?.Count() ?? 0;
 
-    private List<UserRow> allUsers = new()
-    {
-        new("Ali Hassan", "ali.h@uni.edu", "Student", true),
-        new("Dr. Sara Malik", "s.malik@uni.edu", "Instructor", true),
-        new("Omar Khalid", "o.khalid@uni.edu", "Student", true),
-        new("Nora Ahmed", "n.ahmed@uni.edu", "Student", false),
-        new("Dr. Faisal Al-Amin", "f.alamin@uni.edu", "Instructor", true),
-        new("Admin User", "admin@uni.edu", "Admin", true),
-    };
+            stats = new()
+            {
+                new("Total Users",   users.Count.ToString(),                                      "registered"),
+                new("Instructors",   users.Count(u => u.Roles.Contains("INSTRUCTOR")).ToString(), "active"),
+                new("Students",      users.Count(u => u.Roles.Contains("STUDENT")).ToString(),    "active"),
+                new("Courses",       courseCount.ToString(),                                      "this semester"),
+            };
+        }
+        catch { }
+        finally
+        {
+            isLoaded = true;
+            StateHasChanged();
+        }
+    }
 
-    private string RoleBadge(string role) => role switch
+    private static string RoleBadge(string role) => role switch
     {
-        "Admin"      => "bg-brand-s1 text-white",
-        "Instructor" => "bg-secondary text-white",
-        "Student"    => "bg-brand-4 text-foreground",
-        _            => ""
+        "ADMIN"      => "bg-brand-s1 text-white",
+        "CHAIR"      => "bg-brand-s1 text-white",
+        "INSTRUCTOR" => "bg-secondary text-white",
+        "STUDENT"    => "bg-brand-4 text-foreground",
+        _            => "bg-brand-5 text-secondary"
     };
 }

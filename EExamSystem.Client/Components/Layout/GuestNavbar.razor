@@ -14,11 +14,11 @@
 
         <div class="flex items-center gap-1 border border-brand-4 rounded-full p-0.5 text-xs">
             <button @onclick='() => Lang.SetLanguage("en")'
-                    class="px-2.5 py-1 rounded-full transition-colors @(Lang.Current == "en" ? "bg-secondary text-white font-semibold" : "text-white hover:bg-brand-4")">
+                    class="px-2.5 py-1 rounded-full transition-colors @(Lang.Current == "en" ? "bg-secondary text-white font-semibold" : "text-white hover:bg-secondary")">
                 EN
             </button>
             <button @onclick='() => Lang.SetLanguage("ar")'
-                    class="px-2.5 py-1 rounded-full transition-colors @(Lang.Current == "ar" ? "bg-secondary text-white font-semibold" : "text-white hover:bg-brand-4")">
+                    class="px-2.5 py-1 rounded-full transition-colors @(Lang.Current == "ar" ? "bg-secondary text-white font-semibold" : "text-white hover:bg-secondary")">
                 AR
             </button>
         </div>
