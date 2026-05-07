@@ -23,14 +23,32 @@ public class ExamAssignmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Assigns a specific exam to a section.
+    /// Assigns an exam to a section, making it visible and accessible to enrolled students.
     /// </summary>
-    /// <param name="examId">The ID of the exam.</param>
-    /// <param name="sectionId">The ID of the section.</param>
-    /// <response code="200">If the exam was successfully assigned.</response>
-    /// <response code="400">If the exam and section belong to different courses, or if already assigned.</response>
-    /// <response code="404">If the exam or section does not exist.</response>
-    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
+    /// <param name="examId">The ID of the exam to assign.</param>
+    /// <param name="sectionId">The ID of the target section.</param>
+    /// <returns>A <see cref="ServiceResponse{T}"/> with <c>Data: true</c> on success.</returns>
+    /// <response code="200">
+    /// Exam assigned successfully. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>ExamAssignedSuccess</c> – The exam was linked to the section.</item>
+    /// </list>
+    /// </response>
+    /// <response code="400">
+    /// Assignment rejected. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>CourseMismatch</c> – The exam and section belong to different courses.</item>
+    ///   <item><c>ExamAlreadyAssigned</c> – This exam is already assigned to the given section.</item>
+    /// </list>
+    /// </response>
+    /// <response code="404">
+    /// A required resource was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>ExamNotFound</c> – No exam exists with the given ID.</item>
+    ///   <item><c>SectionNotFound</c> – No section exists with the given ID.</item>
+    /// </list>
+    /// </response>
+    [Authorize(Roles = "Instructor,Admin")]
     [HttpPost("exams/{examId}/sections/{sectionId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -51,13 +69,26 @@ public class ExamAssignmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Revokes an exam assignment from a section.
+    /// Revokes an exam assignment from a section, preventing enrolled students from accessing it.
     /// </summary>
     /// <param name="examId">The ID of the exam.</param>
     /// <param name="sectionId">The ID of the section.</param>
-    /// <response code="200">If the assignment was successfully revoked.</response>
-    /// <response code="404">If the exam, section, or specific assignment was not found.</response>
-    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
+    /// <returns>A <see cref="ServiceResponse{T}"/> with <c>Data: true</c> on success.</returns>
+    /// <response code="200">
+    /// Assignment revoked successfully. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>AssignmentRevokedSuccess</c> – The exam was unlinked from the section.</item>
+    /// </list>
+    /// </response>
+    /// <response code="404">
+    /// A required resource was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>ExamNotFound</c> – No exam exists with the given ID.</item>
+    ///   <item><c>SectionNotFound</c> – No section exists with the given ID.</item>
+    ///   <item><c>AssignmentNotFound</c> – This exam is not currently assigned to the given section.</item>
+    /// </list>
+    /// </response>
+    [Authorize(Roles = "Instructor,Admin")]
     [HttpDelete("exams/{examId}/sections/{sectionId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -75,9 +106,15 @@ public class ExamAssignmentsController : ControllerBase
     /// Retrieves all sections that have been assigned a specific exam.
     /// </summary>
     /// <param name="examId">The ID of the exam.</param>
-    /// <response code="200">Returns the list of assigned sections.</response>
-    /// <response code="404">If the exam is not found.</response>
-    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
+    /// <returns>A <see cref="ServiceResponse{T}"/> containing a list of <see cref="SectionDto"/>.</returns>
+    /// <response code="200">Successfully retrieved the list of assigned sections.</response>
+    /// <response code="404">
+    /// The exam was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>ExamNotFound</c> – No exam exists with the given ID.</item>
+    /// </list>
+    /// </response>
+    [Authorize(Roles = "Instructor,Admin")]
     [HttpGet("exams/{examId}/sections")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<SectionDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -92,11 +129,17 @@ public class ExamAssignmentsController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves all exams scheduled for a specific section.
+    /// Retrieves all exams currently assigned to a specific section.
     /// </summary>
     /// <param name="sectionId">The ID of the section.</param>
-    /// <response code="200">Returns the list of assigned exams.</response>
-    /// <response code="404">If the section is not found.</response>
+    /// <returns>A <see cref="ServiceResponse{T}"/> containing a list of <see cref="ExamDto"/>.</returns>
+    /// <response code="200">Successfully retrieved the list of exams for the section.</response>
+    /// <response code="404">
+    /// The section was not found. Possible <c>Message</c> values:
+    /// <list type="bullet">
+    ///   <item><c>SectionNotFound</c> – No section exists with the given ID.</item>
+    /// </list>
+    /// </response>
     [HttpGet("sections/{sectionId}/exams")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<ExamDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

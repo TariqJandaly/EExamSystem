@@ -143,7 +143,8 @@ builder.Services.AddScoped<ISectionService, SectionService>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IExamAssignmentService, ExamAssignmentService>();
 builder.Services.AddScoped<IStudentExamsService, StudentExamsService>();
-
+builder.Services.AddScoped<IExamSessionService, ExamSessionService>();
+builder.Services.AddScoped<IResultsService, ResultsService>();
 
 // Ensure roles are created in the database
 var serviceProvider = builder.Services.BuildServiceProvider();
