@@ -20,40 +20,26 @@ public class ExamSessionsController : ControllerBase
     /// <summary>
     /// Initializes a new instance of the <see cref="ExamSessionsController"/> class.
     /// </summary>
+    /// <param name="sessionService">The service handling exam session business logic.</param>
     public ExamSessionsController(IExamSessionService sessionService)
     {
         _sessionService = sessionService;
     }
 
     /// <summary>
-    /// Starts a new exam session or resumes an existing unsubmitted one.
+    /// Starts a new exam session or resumes an ongoing, unsubmitted session.
     /// </summary>
     /// <remarks>
-    /// This endpoint strips correct answers from the response payload to prevent cheating.
-    /// If a prior unsubmitted session exists, it is resumed and previously saved answers are rehydrated into the payload.
+    /// This endpoint securely strips correct answers from the payload to prevent cheating. 
+    /// If resuming, it will also rehydrate the payload with the student's previously saved answers.
     /// </remarks>
     /// <param name="examId">The unique identifier of the exam to start or resume.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing an <see cref="ActiveSessionDto"/> with the safe exam payload and submission deadline.</returns>
-    /// <response code="200">Session started or resumed. <c>Data</c> contains the exam questions and deadline.</response>
-    /// <response code="400">
-    /// The session cannot be started. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>ExamAlreadySubmitted</c> – This exam session was already submitted and locked.</item>
-    /// </list>
-    /// </response>
-    /// <response code="401">The student is not authenticated.</response>
-    /// <response code="404">
-    /// The exam is inaccessible. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>ExamUnavailableOrUnauthorized</c> – The exam does not exist, has expired, or the student is not enrolled in an assigned section.</item>
-    /// </list>
-    /// </response>
-    /// <response code="500">
-    /// An unexpected infrastructure or operational error occurred. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>InternalServerError</c> – A fallback for unhandled failures.</item>
-    /// </list>
-    /// </response>
+    /// <returns>An <see cref="ActiveSessionDto"/> containing the safe exam payload and deadline.</returns>
+    /// <response code="200">Successfully started or resumed the exam session.</response>
+    /// <response code="400">If the exam has already been submitted and cannot be resumed.</response>
+    /// <response code="401">If the student is not authenticated.</response>
+    /// <response code="404">If the exam is unavailable, expired, or the student is not authorized to take it.</response>
+    /// <response code="500">If an unexpected operational or infrastructure error occurs.</response>
     [HttpPost("start/{examId}")]
     [ProducesResponseType(typeof(ServiceResponse<ActiveSessionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -75,6 +61,7 @@ public class ExamSessionsController : ControllerBase
             if (result.Message == "ExamUnavailableOrUnauthorized")
                 return NotFound(new ErrorServiceResponse { Message = result.Message, StatusCode = 404 });
 
+            // Graceful fallback for unexpected operational/infrastructure errors
             return StatusCode(500, new ErrorServiceResponse { Message = result.Message ?? "InternalServerError", StatusCode = 500 });
         }
 
@@ -82,37 +69,19 @@ public class ExamSessionsController : ControllerBase
     }
 
     /// <summary>
-    /// Auto-saves a student's answer during an active exam session.
+    /// Auto-saves a student's answer choice during an active exam session.
     /// </summary>
     /// <remarks>
-    /// Performs an atomic upsert — if the student previously answered this question, the record is updated rather than duplicated.
+    /// This endpoint performs an atomic upsert. If the student changes their mind and selects a different option, the existing answer record is updated.
     /// </remarks>
     /// <param name="sessionId">The unique identifier of the active exam session.</param>
-    /// <param name="answerDto">The answer payload. See <see cref="SubmitAnswerDto"/>.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> with <c>Data: true</c> when the answer is saved.</returns>
-    /// <response code="200">Answer saved or updated successfully.</response>
-    /// <response code="400">
-    /// The answer was rejected. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SessionLocked</c> – The session has already been submitted.</item>
-    ///   <item><c>TimeExpired</c> – The exam duration has elapsed.</item>
-    ///   <item><c>InvalidOption</c> – The selected option ID does not belong to the given question.</item>
-    ///   <item><c>InvalidQuestionForExam</c> – The question does not belong to this exam's covered chapters.</item>
-    /// </list>
-    /// </response>
-    /// <response code="401">The student is not authenticated.</response>
-    /// <response code="404">
-    /// The session was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SessionNotFound</c> – No active session exists with the given ID for this student.</item>
-    /// </list>
-    /// </response>
-    /// <response code="500">
-    /// An unexpected database or server error occurred. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>InternalServerError</c> – A fallback for unhandled failures.</item>
-    /// </list>
-    /// </response>
+    /// <param name="answerDto">The payload containing the question ID and the selected option ID.</param>
+    /// <returns>A boolean indicating if the save operation was successful.</returns>
+    /// <response code="200">The answer was successfully saved or updated.</response>
+    /// <response code="400">If the session is locked, time has expired, or the provided question/option is invalid.</response>
+    /// <response code="401">If the student is not authenticated.</response>
+    /// <response code="404">If the active session cannot be found.</response>
+    /// <response code="500">If an unexpected database or server error occurs.</response>
     [HttpPut("{sessionId}/answers")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -128,8 +97,7 @@ public class ExamSessionsController : ControllerBase
 
         if (!result.IsSuccess)
         {
-            if (result.Message == "SessionLocked" || result.Message == "TimeExpired" ||
-                result.Message == "InvalidOption" || result.Message == "InvalidQuestionForExam")
+            if (result.Message == "SessionLocked" || result.Message == "TimeExpired" || result.Message == "InvalidOption" || result.Message == "InvalidQuestionForExam")
                 return BadRequest(new ErrorServiceResponse { Message = result.Message, StatusCode = 400 });
 
             if (result.Message == "SessionNotFound")
@@ -142,34 +110,15 @@ public class ExamSessionsController : ControllerBase
     }
 
     /// <summary>
-    /// Submits and locks the exam session, then triggers auto-grading.
+    /// Submits the exam, locks the session to prevent further changes, and triggers the auto-grading process.
     /// </summary>
-    /// <remarks>
-    /// Once submitted, the session is permanently locked. No further answer changes are accepted.
-    /// Grading is calculated immediately based on the saved answers at the time of submission.
-    /// </remarks>
     /// <param name="sessionId">The unique identifier of the session to submit.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing the final <c>decimal</c> score.</returns>
-    /// <response code="200">Exam submitted and graded. <c>Data</c> contains the final score.</response>
-    /// <response code="400">
-    /// Submission was rejected. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SessionAlreadySubmitted</c> – This session was already submitted and cannot be re-graded.</item>
-    /// </list>
-    /// </response>
-    /// <response code="401">The student is not authenticated.</response>
-    /// <response code="404">
-    /// The session was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SessionNotFound</c> – No active session exists with the given ID for this student.</item>
-    /// </list>
-    /// </response>
-    /// <response code="500">
-    /// An unexpected error occurred during grading. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>InternalServerError</c> – A fallback for unhandled failures.</item>
-    /// </list>
-    /// </response>
+    /// <returns>The final calculated score based on the saved answers.</returns>
+    /// <response code="200">The exam was successfully submitted and graded.</response>
+    /// <response code="400">If the session has already been submitted and locked.</response>
+    /// <response code="401">If the student is not authenticated.</response>
+    /// <response code="404">If the active session cannot be found.</response>
+    /// <response code="500">If an unexpected operational error occurs during grading.</response>
     [HttpPost("{sessionId}/submit")]
     [ProducesResponseType(typeof(ServiceResponse<decimal>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

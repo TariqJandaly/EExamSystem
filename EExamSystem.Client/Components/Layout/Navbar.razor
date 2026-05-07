@@ -1,6 +1,4 @@
 @inject LanguageService Lang
-@inject IAuthService AuthService
-@inject NavigationManager Navigation
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -10,56 +8,26 @@
     </a>
 
     <div class="flex items-center gap-6 text-sm font-medium">
-
-        <AuthorizeView Context="authCtx">
-            <Authorized>
-                <AuthorizeView Roles="STUDENT">
-                    <NavLink href="/exams"
-                             class="hover:opacity-75 transition-opacity"
-                             ActiveClass="underline underline-offset-4">
-                        @Lang.T("nav.exams")
-                    </NavLink>
-                </AuthorizeView>
-
-                <AuthorizeView Roles="INSTRUCTOR,CHAIR,ADMIN">
-                    <NavLink href="/instructor"
-                             class="hover:opacity-75 transition-opacity"
-                             ActiveClass="underline underline-offset-4">
-                        @Lang.T("nav.instructor")
-                    </NavLink>
-                </AuthorizeView>
-
-                <AuthorizeView Roles="ADMIN,CHAIR">
-                    <NavLink href="/admin"
-                             class="hover:opacity-75 transition-opacity"
-                             ActiveClass="underline underline-offset-4">
-                        @Lang.T("nav.admin")
-                    </NavLink>
-                    <NavLink href="/admin/users"
-                             class="hover:opacity-75 transition-opacity opacity-80"
-                             ActiveClass="underline underline-offset-4">
-                        @Lang.T("nav.users")
-                    </NavLink>
-                    <NavLink href="/admin/courses"
-                             class="hover:opacity-75 transition-opacity opacity-80"
-                             ActiveClass="underline underline-offset-4">
-                        @Lang.T("nav.courses")
-                    </NavLink>
-                </AuthorizeView>
-
-                <button @onclick="HandleLogout"
-                        class="hover:opacity-75 transition-opacity">
-                    @Lang.T("nav.logout")
-                </button>
-            </Authorized>
-            <NotAuthorized>
-                <NavLink href="/login"
-                         class="hover:opacity-75 transition-opacity"
-                         ActiveClass="underline underline-offset-4">
-                    @Lang.T("nav.login")
-                </NavLink>
-            </NotAuthorized>
-        </AuthorizeView>
+        <NavLink href="/login"
+                 class="hover:opacity-75 transition-opacity"
+                 ActiveClass="underline underline-offset-4">
+            @Lang.T("nav.login")
+        </NavLink>
+        <NavLink href="/exams"
+                 class="hover:opacity-75 transition-opacity"
+                 ActiveClass="underline underline-offset-4">
+            @Lang.T("nav.exams")
+        </NavLink>
+        <NavLink href="/instructor"
+                 class="hover:opacity-75 transition-opacity"
+                 ActiveClass="underline underline-offset-4">
+            @Lang.T("nav.instructor")
+        </NavLink>
+        <NavLink href="/admin"
+                 class="hover:opacity-75 transition-opacity"
+                 ActiveClass="underline underline-offset-4">
+            @Lang.T("nav.admin")
+        </NavLink>
 
         <div class="flex items-center gap-1 border border-primary-foreground/30 rounded-full p-0.5 text-xs">
             <button @onclick='() => Lang.SetLanguage("en")'
@@ -78,10 +46,4 @@
     protected override void OnInitialized() => Lang.OnChange += Refresh;
     private void Refresh() => InvokeAsync(StateHasChanged);
     public void Dispose() => Lang.OnChange -= Refresh;
-
-    private async Task HandleLogout()
-    {
-        await AuthService.LogoutAsync();
-        Navigation.NavigateTo("/login", replace: true);
-    }
 }

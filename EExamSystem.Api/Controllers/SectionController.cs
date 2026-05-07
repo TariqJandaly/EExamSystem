@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EExamSystem.Api.Controllers;
 
 /// <summary>
-/// Manages course sections and student enrollment within them.
+/// Manages course sections and administrative student enrollment operations.
 /// </summary>
 [Authorize]
 [ApiController]
@@ -22,11 +22,10 @@ public class SectionsController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves all sections belonging to a specific course.
+    /// Retrieves a collection of sections for a specific course.
     /// </summary>
     /// <param name="courseId">The ID of the course.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing a list of <see cref="SectionDto"/>.</returns>
-    /// <response code="200">Successfully retrieved the section list.</response>
+    /// <response code="200">Returns the list of sections successfully.</response>
     [HttpGet("course/{courseId}")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<SectionDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ServiceResponse<IEnumerable<SectionDto>>>> GetSections(int courseId)
@@ -39,14 +38,8 @@ public class SectionsController : ControllerBase
     /// Retrieves the details of a specific section by its ID.
     /// </summary>
     /// <param name="id">The unique identifier of the section.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing the matching <see cref="SectionDto"/>.</returns>
-    /// <response code="200">Successfully retrieved the section.</response>
-    /// <response code="404">
-    /// The section was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SectionNotFound</c> – No section exists with the given ID.</item>
-    /// </list>
-    /// </response>
+    /// <response code="200">Returns the requested section data.</response>
+    /// <response code="404">If the section does not exist.</response>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ServiceResponse<SectionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -61,22 +54,11 @@ public class SectionsController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a new section for a course. Restricted to Instructors and Admins.
+    /// Creates a new section for a course. Resticted to Instructors and Admins.
     /// </summary>
-    /// <param name="model">The section creation payload. See <see cref="CreateSectionDto"/>.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing the newly created <see cref="SectionDto"/>.</returns>
-    /// <response code="201">
-    /// Section created successfully. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SectionCreatedSuccess</c> – The section was persisted under the given course.</item>
-    /// </list>
-    /// </response>
-    /// <response code="404">
-    /// The parent course was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>CourseNotFound</c> – No course exists with the ID specified in the payload.</item>
-    /// </list>
-    /// </response>
+    /// <param name="model">The section creation data.</param>
+    /// <response code="201">Returns the newly created section.</response>
+    /// <response code="404">If the parent course is not found.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPost]
     [ProducesResponseType(typeof(ServiceResponse<SectionDto>), StatusCodes.Status201Created)]
@@ -88,35 +70,18 @@ public class SectionsController : ControllerBase
         if (!result.IsSuccess)
             return NotFound(new ErrorServiceResponse { Message = result.Message, StatusCode = 404 });
 
-        return CreatedAtAction(nameof(GetSection), new { id = result.Data?.Id },
+        return CreatedAtAction(nameof(GetSection), new { id = result.Data?.Id }, 
             new ServiceResponse<SectionDto> { Data = result.Data, Message = result.Message, StatusCode = 201 });
     }
 
     /// <summary>
-    /// Enrolls a student into a section. Restricted to Instructors and Admins.
+    /// Enrolls a student into a section.
     /// </summary>
     /// <param name="sectionId">The ID of the target section.</param>
-    /// <param name="studentId">The GUID of the student user.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> with <c>Data: true</c> on success.</returns>
-    /// <response code="200">
-    /// Student enrolled successfully. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>StudentEnrolledSuccess</c> – The student was added to the section.</item>
-    /// </list>
-    /// </response>
-    /// <response code="400">
-    /// Enrollment rejected. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>StudentAlreadyEnrolled</c> – The student is already a member of this section.</item>
-    /// </list>
-    /// </response>
-    /// <response code="404">
-    /// A required resource was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SectionNotFound</c> – No section exists with the given ID.</item>
-    ///   <item><c>StudentNotFound</c> – No user account exists for the given student ID.</item>
-    /// </list>
-    /// </response>
+    /// <param name="studentId">The ID of the student user.</param>
+    /// <response code="200">If the student was successfully enrolled.</response>
+    /// <response code="400">If the student is already a member of the section.</response>
+    /// <response code="404">If the section or student was not found.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpPost("{sectionId}/students/{studentId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
@@ -138,24 +103,12 @@ public class SectionsController : ControllerBase
     }
 
     /// <summary>
-    /// Removes a student from a section. Restricted to Instructors and Admins.
+    /// Removes a student from a section.
     /// </summary>
     /// <param name="sectionId">The ID of the section.</param>
-    /// <param name="studentId">The GUID of the student to remove.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> with <c>Data: true</c> on success.</returns>
-    /// <response code="200">
-    /// Student removed successfully. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>StudentRemovedSuccess</c> – The student was unenrolled from the section.</item>
-    /// </list>
-    /// </response>
-    /// <response code="404">
-    /// A required resource was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SectionNotFound</c> – No section exists with the given ID.</item>
-    ///   <item><c>EnrollmentNotFound</c> – The student is not enrolled in this section.</item>
-    /// </list>
-    /// </response>
+    /// <param name="studentId">The ID of the student to remove.</param>
+    /// <response code="200">If removal was successful.</response>
+    /// <response code="404">If section or enrollment was not found.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpDelete("{sectionId}/students/{studentId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
@@ -171,22 +124,11 @@ public class SectionsController : ControllerBase
     }
 
     /// <summary>
-    /// Permanently deletes a section. Restricted to Instructors and Admins.
+    /// Deletes an existing section.
     /// </summary>
     /// <param name="id">The ID of the section to delete.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> with <c>Data: true</c> on success.</returns>
-    /// <response code="200">
-    /// Section deleted successfully. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SectionDeletedSuccess</c> – The section was removed.</item>
-    /// </list>
-    /// </response>
-    /// <response code="404">
-    /// The section was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>SectionNotFound</c> – No section exists with the given ID.</item>
-    /// </list>
-    /// </response>
+    /// <response code="200">If deletion was successful.</response>
+    /// <response code="404">If the section was not found.</response>
     [Authorize(Roles = "Instructor,Admin")]
     [HttpDelete("{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]

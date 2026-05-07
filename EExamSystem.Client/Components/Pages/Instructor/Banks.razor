@@ -1,7 +1,5 @@
-@page "/instructor/{CourseId:int}/banks"
-@attribute [Authorize(Roles = "INSTRUCTOR,CHAIR,ADMIN")]
+@page "/instructor/{CourseId}/banks"
 @inject LanguageService Lang
-@inject ApiClient Api
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -12,28 +10,19 @@
     <div class="flex items-center gap-2 text-sm text-secondary mb-6">
         <a href="/instructor" class="hover:text-primary transition-colors">@Lang.T("instructor.title")</a>
         <span>/</span>
-        <span class="text-foreground font-medium">@Lang.T("banks.title")</span>
+        <span class="text-foreground font-medium">@CourseId.ToUpper()</span>
     </div>
 
-    <div class="flex items-start justify-between mb-6">
+    <div class="flex items-start justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-primary">@Lang.T("banks.title")</h1>
-            <p class="text-secondary mt-1">Course #@CourseId</p>
+            <p class="text-secondary mt-1">@CourseId.ToUpper()</p>
         </div>
-        <button @onclick="() => { showNewBank = true; errorMessage = null; successMessage = null; }"
+        <button @onclick="() => showNewBank = true"
                 class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-colors">
             @Lang.T("banks.new")
         </button>
     </div>
-
-    @if (errorMessage is not null)
-    {
-        <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">@errorMessage</div>
-    }
-    @if (successMessage is not null)
-    {
-        <div class="mb-4 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">@successMessage</div>
-    }
 
     @if (showNewBank)
     {
@@ -54,189 +43,46 @@
         </div>
     }
 
-    @if (!isLoaded)
-    {
-        <p class="text-secondary text-sm">@Lang.T("common.loading.banks")</p>
-    }
-    else if (banks.Count == 0)
-    {
-        <div class="text-center py-16 text-secondary border border-dashed border-brand-4 rounded-2xl">
-            <p class="font-medium">@Lang.T("banks.empty.msg")</p>
-            <p class="text-sm mt-1">@Lang.T("banks.empty.hint")</p>
-        </div>
-    }
-    else
-    {
-        <div class="flex flex-col gap-3">
-            @foreach (var bank in banks)
-            {
-                <div class="flex items-center justify-between bg-white border border-brand-4 rounded-2xl px-6 py-4 shadow-sm hover:shadow-md transition-all group">
-                    @if (editingBankId == bank.Id)
-                    {
-                        <div class="flex items-center gap-3 flex-1">
-                            <input @bind="editBankName"
-                                   class="flex-1 px-3 py-1.5 rounded-lg border border-brand-4 bg-brand-5 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                            <button @onclick="() => SaveBankRename(bank.Id)"
-                                    class="text-xs px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-primary-light transition-colors">
-                                @Lang.T("action.save")
-                            </button>
-                            <button @onclick="CancelEdit"
-                                    class="text-xs px-3 py-1.5 rounded-lg border border-brand-4 text-secondary hover:bg-brand-5 transition-colors">
-                                @Lang.T("action.cancel")
-                            </button>
-                        </div>
-                    }
-                    else
-                    {
-                        <a href="/instructor/@CourseId/banks/@bank.Id" class="flex-1">
-                            <h2 class="font-semibold text-foreground group-hover:text-primary transition-colors">@bank.Name</h2>
-                            <p class="text-xs text-secondary mt-0.5">@Lang.T("banks.created.on") @bank.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")</p>
-                        </a>
-                        <div class="flex items-center gap-2 ml-4 shrink-0">
-                            <button @onclick="() => StartEdit(bank)"
-                                    class="text-xs text-secondary hover:text-primary transition-colors px-2 py-1 rounded hover:bg-brand-5">
-                                @Lang.T("action.edit")
-                            </button>
-                            @if (deletingBankId == bank.Id)
-                            {
-                                <span class="text-xs text-red-600 flex items-center gap-1">
-                                    @Lang.T("action.confirm")
-                                    <button @onclick="() => ConfirmDeleteBank(bank.Id)" class="underline ml-1">@Lang.T("action.yes")</button>
-                                    <button @onclick="() => deletingBankId = null" class="underline ml-1">@Lang.T("action.no")</button>
-                                </span>
-                            }
-                            else
-                            {
-                                <button @onclick="() => deletingBankId = bank.Id"
-                                        class="text-xs text-red-400 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50">
-                                    @Lang.T("action.delete")
-                                </button>
-                            }
-                        </div>
-                    }
+    <div class="flex flex-col gap-3">
+        @foreach (var bank in banks)
+        {
+            <a href="/instructor/@CourseId/banks/@bank.Id"
+               class="flex items-center justify-between bg-white border border-brand-4 rounded-2xl px-6 py-4 shadow-sm hover:shadow-md hover:border-primary-light transition-all group">
+                <div>
+                    <h2 class="font-semibold text-foreground group-hover:text-primary transition-colors">@bank.Name</h2>
+                    <p class="text-xs text-secondary mt-0.5">@bank.QuestionCount questions</p>
                 </div>
-            }
-        </div>
-    }
+                <span class="text-secondary group-hover:text-primary transition-colors text-lg">→</span>
+            </a>
+        }
+    </div>
 </div>
 
 @code {
-    [Parameter] public int CourseId { get; set; }
-
-    private List<TestbankDto> banks = new();
-    private bool isLoaded = false;
-    private string? errorMessage;
-    private string? successMessage;
-
-    private bool showNewBank = false;
-    private string newBankName = "";
-
-    private int? editingBankId;
-    private string editBankName = "";
-    private int? deletingBankId;
-
     protected override void OnInitialized() => Lang.OnChange += Refresh;
     private void Refresh() => InvokeAsync(StateHasChanged);
     public void Dispose() => Lang.OnChange -= Refresh;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender) return;
-        await LoadBanks();
-    }
+    [Parameter] public string CourseId { get; set; } = "";
 
-    private async Task LoadBanks()
-    {
-        try
-        {
-            var http = await Api.CreateAsync();
-            var res = await http.GetFromJsonAsync<ServiceResponse<List<TestbankDto>>>(
-                "/api/v1/testbank");
-            banks = res?.Data?.Where(b => b.CourseId == CourseId).ToList() ?? new();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Failed to load banks: {ex.Message}";
-        }
-        finally
-        {
-            isLoaded = true;
-            StateHasChanged();
-        }
-    }
+    private bool showNewBank = false;
+    private string newBankName = "";
 
-    private async Task AddBank()
+    private record Bank(string Id, string Name, int QuestionCount);
+
+    private List<Bank> banks = new()
+    {
+        new("bank1", "Chapter 1 — Introduction to Algorithms", 20),
+        new("bank2", "Chapter 2 — Sorting & Searching", 35),
+        new("bank3", "Chapter 3 — Graph Algorithms", 28),
+        new("bank4", "Final Exam Pool", 60),
+    };
+
+    private void AddBank()
     {
         if (string.IsNullOrWhiteSpace(newBankName)) return;
-        errorMessage = null; successMessage = null;
-        try
-        {
-            var http = await Api.CreateAsync();
-            var res = await http.PostAsJsonAsync("/api/v1/testbank",
-                new TestbankCreateDto { Name = newBankName, CourseId = CourseId });
-            var result = await res.Content.ReadFromJsonAsync<ServiceResponse<TestbankDto>>();
-            if (result?.Success == true)
-            {
-                newBankName = "";
-                showNewBank = false;
-                successMessage = Lang.T("banks.btn.create") + " ✓";
-                await LoadBanks();
-            }
-            else errorMessage = result?.Message ?? Lang.T("err.save");
-        }
-        catch (Exception ex) { errorMessage = ex.Message; }
-    }
-
-    private void StartEdit(TestbankDto bank)
-    {
-        editingBankId = bank.Id;
-        editBankName = bank.Name;
-    }
-
-    private void CancelEdit()
-    {
-        editingBankId = null;
-        editBankName = "";
-    }
-
-    private async Task SaveBankRename(int bankId)
-    {
-        if (string.IsNullOrWhiteSpace(editBankName)) return;
-        errorMessage = null; successMessage = null;
-        try
-        {
-            var http = await Api.CreateAsync();
-            var res = await http.PutAsJsonAsync($"/api/v1/testbank/{bankId}",
-                new TestbankCreateDto { Name = editBankName, CourseId = CourseId });
-            var result = await res.Content.ReadFromJsonAsync<ServiceResponse<TestbankDto>>();
-            if (result?.Success == true)
-            {
-                editingBankId = null;
-                successMessage = Lang.T("action.save") + " ✓";
-                await LoadBanks();
-            }
-            else errorMessage = result?.Message ?? Lang.T("err.save");
-        }
-        catch (Exception ex) { errorMessage = ex.Message; }
-    }
-
-    private async Task ConfirmDeleteBank(int bankId)
-    {
-        errorMessage = null; successMessage = null;
-        try
-        {
-            var http = await Api.CreateAsync();
-            var res = await http.DeleteAsync($"/api/v1/testbank/{bankId}");
-            var result = await res.Content.ReadFromJsonAsync<ServiceResponse<TestbankDto>>();
-            if (result?.Success == true)
-            {
-                deletingBankId = null;
-                successMessage = Lang.T("action.delete") + " ✓";
-                await LoadBanks();
-            }
-            else errorMessage = result?.Message ?? Lang.T("err.save");
-        }
-        catch (Exception ex) { errorMessage = ex.Message; }
-        finally { deletingBankId = null; }
+        banks.Add(new($"bank{banks.Count + 1}", newBankName, 0));
+        newBankName = "";
+        showNewBank = false;
     }
 }
