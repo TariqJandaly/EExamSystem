@@ -96,11 +96,11 @@ public class UserService : IUserService
         }
 
         // add roles
-        await _userManager.AddToRolesAsync(user, userCreateDto.Roles);
+        var roleResult = await _userManager.AddToRolesAsync(user, userCreateDto.Roles);
 
-        if (!result.Succeeded)
+        if (!roleResult.Succeeded)
         {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
             return new ServiceResponse<UserDto>
             {
                 Success = false,

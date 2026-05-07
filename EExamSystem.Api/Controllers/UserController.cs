@@ -189,7 +189,7 @@ public class UserController : ControllerBase
     /// </response>
     [HttpPost("{id}/roles/add")]
     [Authorize(Roles = "CHAIR,ADMIN")]
-    [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ServiceResponse<UserRolesDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddRolesToUserAsync(string id, [FromBody] UserRolesDto userRolesDto)
     {
@@ -217,7 +217,7 @@ public class UserController : ControllerBase
     /// </response>
     [HttpPost("{id}/roles/remove")]
     [Authorize(Roles = "CHAIR,ADMIN")]
-    [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ServiceResponse<UserRolesDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveRolesFromUserAsync(string id, [FromBody] UserRolesDto userRolesDto)
     {
