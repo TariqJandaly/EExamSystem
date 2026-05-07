@@ -1,5 +1,7 @@
 @page "/exams"
+@attribute [Authorize(Roles = "STUDENT")]
 @inject LanguageService Lang
+@inject ApiClient Api
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -12,44 +14,113 @@
         <p class="text-secondary mt-1">@Lang.T("exams.subtitle")</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        @foreach (var exam in exams)
+    @if (errorMessage is not null)
+    {
+        <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">@errorMessage</div>
+    }
+
+    @if (!isLoaded)
+    {
+        <p class="text-secondary text-sm">@Lang.T("common.loading")</p>
+    }
+    else
+    {
+        <h2 class="text-lg font-semibold text-primary mb-3">@Lang.T("exams.tab.available")</h2>
+        @if (activeExams.Count == 0)
         {
-            <div class="bg-white border border-brand-4 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div class="flex items-start justify-between mb-3">
-                    <div>
-                        <h2 class="font-semibold text-foreground text-lg">@exam.Title</h2>
-                        <p class="text-sm text-secondary">@exam.Course</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 text-sm text-secondary mt-4">
-                    <span>@exam.Duration min</span>
-                    <span>@exam.Date</span>
-                    <span>@exam.Questions questions</span>
-                </div>
-                @if (exam.Status == "Available")
+            <p class="text-secondary text-sm mb-8">@Lang.T("exams.noactive")</p>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+                @foreach (var exam in activeExams)
                 {
-                    <a href="/exams/@exam.Id"
-                       class="mt-4 block text-center py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-light transition-colors">
-                        @Lang.T("exams.start")
-                    </a>
+                    <div class="bg-white border border-brand-4 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <h2 class="font-semibold text-foreground text-lg">@exam.Title</h2>
+                                <p class="text-sm text-secondary">@exam.CourseName</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 text-sm text-secondary mt-4">
+                            <span>@exam.DurationMinutes min</span>
+                            <span>@exam.StartTime.ToLocalTime().ToString("MMM d, h:mm tt")</span>
+                            <span>Max: @exam.MaxScore pts</span>
+                        </div>
+                        <a href="/exams/@exam.ExamId"
+                           class="mt-4 block text-center py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary-light transition-colors">
+                            @Lang.T("exams.start")
+                        </a>
+                    </div>
                 }
             </div>
         }
-    </div>
+
+        <h2 class="text-lg font-semibold text-primary mb-3">@Lang.T("exams.tab.all")</h2>
+        @if (examHistory.Count == 0)
+        {
+            <p class="text-secondary text-sm">@Lang.T("exams.nohistory")</p>
+        }
+        else
+        {
+            <div class="flex flex-col gap-3">
+                @foreach (var session in examHistory)
+                {
+                    <div class="bg-white border border-brand-4 rounded-2xl px-6 py-4 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-foreground">@session.Title</p>
+                            <p class="text-xs text-secondary mt-0.5">@session.CourseName — @session.StartedAt.ToLocalTime().ToString("MMM d, yyyy")</p>
+                        </div>
+                        <div class="text-right">
+                            @if (session.FinalScore.HasValue)
+                            {
+                                <p class="text-sm font-bold text-primary">@session.FinalScore / @session.MaxScore</p>
+                            }
+                            else
+                            {
+                                <p class="text-xs text-secondary">@Lang.T("exams.inprogress")</p>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
 </div>
 
 @code {
-    private record ExamItem(string Id, string Title, string Course, string Status, int Duration, string Date, int Questions);
-
-    private List<ExamItem> exams = new()
-    {
-        new("1", "Midterm Exam", "CS301 - Algorithms", "Available", 90, "Today, 2:00 PM", 40),
-        new("2", "Quiz 3", "MATH201 - Calculus", "Available", 30, "Today, 4:00 PM", 15),
-    };
-
+    private List<ActiveExamDto> activeExams = new();
+    private List<ExamHistoryDto> examHistory = new();
+    private bool isLoaded = false;
+    private string? errorMessage;
 
     protected override void OnInitialized() => Lang.OnChange += Refresh;
     private void Refresh() => InvokeAsync(StateHasChanged);
     public void Dispose() => Lang.OnChange -= Refresh;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            var http = await Api.CreateAsync();
+
+            var activeRes = await http.GetFromJsonAsync<ServiceResponse<List<ActiveExamDto>>>(
+                "/api/v1/studentexams/active");
+            activeExams = activeRes?.Data ?? new();
+
+            var historyRes = await http.GetFromJsonAsync<ServiceResponse<List<ExamHistoryDto>>>(
+                "/api/v1/studentexams/history");
+            examHistory = historyRes?.Data ?? new();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load exams: {ex.Message}";
+        }
+        finally
+        {
+            isLoaded = true;
+            StateHasChanged();
+        }
+    }
 }

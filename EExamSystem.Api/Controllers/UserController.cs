@@ -28,7 +28,7 @@ public class UserController : ControllerBase
     /// <response code="200">Returns the list of users if the request is successful.</response>
     /// <response code="400">Returns an error message if the request fails.</response>
     [HttpGet]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<List<UserDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetAllUsersAsync()
@@ -45,7 +45,7 @@ public class UserController : ControllerBase
     /// <response code="200">Returns the user if the request is successful.</response>
     /// <response code="404">Returns an error message if the user is not found.</response>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUserAsync(string id)
@@ -62,7 +62,7 @@ public class UserController : ControllerBase
     /// <response code="200">Returns the created user if the request is successful.</response>
     /// <response code="400">Returns an error message if the request fails.</response>
     [HttpPost]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateUserAsync([FromBody] UserCreateDto userCreateDto)
@@ -79,7 +79,7 @@ public class UserController : ControllerBase
     /// <response code="200">Returns the deleted user if the request is successful.</response>
     /// <response code="404">Returns an error message if the user is not found.</response>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteUserAsync(string id)
@@ -97,7 +97,7 @@ public class UserController : ControllerBase
     /// <response code="200">Returns the updated user if the request is successful.</response>
     /// <response code="404">Returns an error message if the user is not found.</response>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateUserAsync(string id, [FromBody] UserCreateDto userCreateDto)
@@ -115,7 +115,7 @@ public class UserController : ControllerBase
     /// <response code="200">Returns the updated user if the request is successful.</response>
     /// <response code="404">Returns an error message if the user is not found.</response>
     [HttpPost("{id}/roles")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddRolesToUserAsync(string id, [FromBody] UserRolesDto userRolesDto)
@@ -133,7 +133,7 @@ public class UserController : ControllerBase
     /// <response code="200">Returns the updated user if the request is successful.</response>
     /// <response code="404">Returns an error message if the user is not found.</response>
     [HttpDelete("{id}/roles")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<UserDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveRolesFromUserAsync(string id, [FromBody] UserRolesDto userRolesDto)
@@ -151,7 +151,7 @@ public class UserController : ControllerBase
     /// <response code="200">Returns a success message if the password change is successful.</response>
     /// <response code="404">Returns an error message if the user is not found.</response>
     [HttpPost("{id}/change-password")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ChangeUserPasswordAsync(string id, [FromBody] UserChangePasswordDto changePasswordDto)

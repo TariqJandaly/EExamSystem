@@ -31,7 +31,7 @@ public class TestbankController : ControllerBase
     /// <response code="200">Returns the list of testbanks if the request is successful.</response>
     /// <response code="400">Returns an error message if the request fails.</response>
     [HttpGet]
-    [Authorize(Roles = "Chair,Admin,Instructor")]
+    [Authorize(Roles = "CHAIR,ADMIN,INSTRUCTOR")]
     [ProducesResponseType(typeof(ServiceResponse<List<TestbankDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -49,7 +49,7 @@ public class TestbankController : ControllerBase
     /// <response code="200">Returns the testbank if the request is successful.</response>
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpGet("{id}")]
-    [Authorize(Roles = "Chair,Admin,Instructor,Student")]
+    [Authorize(Roles = "CHAIR,ADMIN,INSTRUCTOR,STUDENT")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTestbank(int id)
@@ -67,7 +67,7 @@ public class TestbankController : ControllerBase
     /// <response code="200">Returns the created testbank if the request is successful.</response>
     /// <response code="400">Returns an error message if the request fails.</response>
     [HttpPost]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTestbank([FromBody] TestbankCreateDto testbankCreateDto)
@@ -84,7 +84,7 @@ public class TestbankController : ControllerBase
     /// <response code="200">Returns a success message if the request is successful.</response>
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Chair,Admin")]
+    [Authorize(Roles = "CHAIR,ADMIN")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTestbank(int id)
@@ -103,7 +103,7 @@ public class TestbankController : ControllerBase
     /// <response code="200">Returns the updated testbank if the request is successful.</response>
     /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Chair,Admin,Instructor")]
+    [Authorize(Roles = "CHAIR,ADMIN,INSTRUCTOR")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]

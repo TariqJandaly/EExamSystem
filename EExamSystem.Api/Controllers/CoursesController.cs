@@ -74,7 +74,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <returns>The newly created CourseDto.</returns>
     /// <response code="201">Returns the newly created course successfully.</response>
     /// <response code="400">If the provided data is invalid.</response>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "ADMIN")]
     [HttpPost]
     [ProducesResponseType(typeof(ServiceResponse<CourseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -111,7 +111,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <response code="200">Successfully updated the course.</response>
     /// <response code="400">If the ID in the URL does not match the ID in the body.</response>
     /// <response code="404">If the course does not exist.</response>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "ADMIN")]
     [HttpPut("{courseId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -138,7 +138,7 @@ public class CoursesController(AppDbContext context) : ControllerBase
     /// <param name="courseId">The ID of the course to delete.</param>
     /// <response code="200">Successfully deleted the course.</response>
     /// <response code="404">If the course does not exist.</response>
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "ADMIN")]
     [HttpDelete("{courseId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

@@ -59,7 +59,7 @@ public class SectionsController : ControllerBase
     /// <param name="model">The section creation data.</param>
     /// <response code="201">Returns the newly created section.</response>
     /// <response code="404">If the parent course is not found.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPost]
     [ProducesResponseType(typeof(ServiceResponse<SectionDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -82,7 +82,7 @@ public class SectionsController : ControllerBase
     /// <response code="200">If the student was successfully enrolled.</response>
     /// <response code="400">If the student is already a member of the section.</response>
     /// <response code="404">If the section or student was not found.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPost("{sectionId}/students/{studentId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -109,7 +109,7 @@ public class SectionsController : ControllerBase
     /// <param name="studentId">The ID of the student to remove.</param>
     /// <response code="200">If removal was successful.</response>
     /// <response code="404">If section or enrollment was not found.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpDelete("{sectionId}/students/{studentId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -129,7 +129,7 @@ public class SectionsController : ControllerBase
     /// <param name="id">The ID of the section to delete.</param>
     /// <response code="200">If deletion was successful.</response>
     /// <response code="404">If the section was not found.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpDelete("{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

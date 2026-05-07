@@ -29,7 +29,7 @@ public class EnrollmentController : ControllerBase
     /// <response code="200">If the student was successfully enrolled.</response>
     /// <response code="400">If the student is already enrolled in this section.</response>
     /// <response code="404">If the section or student user does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPost("sections/{sectionId}/students/{studentId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -56,7 +56,7 @@ public class EnrollmentController : ControllerBase
     /// <param name="studentId">The GUID of the student user.</param>
     /// <response code="200">If the student was successfully unenrolled.</response>
     /// <response code="404">If the section or student membership was not found.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpDelete("sections/{sectionId}/students/{studentId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -76,7 +76,7 @@ public class EnrollmentController : ControllerBase
     /// <param name="studentId">The unique ID of the student.</param>
     /// <response code="200">Returns the list of sections the student is enrolled in.</response>
     /// <response code="404">If the student record is not found.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpGet("students/{studentId}/sections")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<SectionDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

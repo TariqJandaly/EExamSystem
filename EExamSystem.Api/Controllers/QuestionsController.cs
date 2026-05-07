@@ -60,7 +60,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// <response code="201">Returns the created question with generated IDs.</response>
     /// <response code="400">If the payload fails validation.</response>
     /// <response code="404">If the specified chapter does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPost("chapters/{testbankChapterId}/questions")]
     [ProducesResponseType(typeof(ServiceResponse<QuestionDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -147,7 +147,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// <response code="200">Successfully updated the question.</response>
     /// <response code="400">If the payload fails validation.</response>
     /// <response code="404">If the question does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPut("questions/{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -182,7 +182,7 @@ public class QuestionsController(AppDbContext context) : ControllerBase
     /// <param name="id">The ID of the question to delete.</param>
     /// <response code="200">Successfully deleted the question.</response>
     /// <response code="404">If the question does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpDelete("questions/{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

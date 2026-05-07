@@ -51,7 +51,7 @@ public class ExamChaptersController(AppDbContext context) : ControllerBase
     /// <response code="200">Successfully attached the chapter to the exam.</response>
     /// <response code="400">If the chapter is already attached to this exam.</response>
     /// <response code="404">If the exam or the chapter does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPost("exams/{examId}/chapters/{chapterId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -87,7 +87,7 @@ public class ExamChaptersController(AppDbContext context) : ControllerBase
     /// <param name="chapterId">The ID of the chapter to remove.</param>
     /// <response code="200">Successfully removed the chapter from the exam.</response>
     /// <response code="404">If the exam or chapter does not exist, or if the chapter wasn't attached.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpDelete("exams/{examId}/chapters/{chapterId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

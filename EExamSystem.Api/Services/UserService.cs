@@ -22,12 +22,18 @@ public class UserService : IUserService
     public async Task<ServiceResponse<List<UserDto>>> GetAllUsersAsync()
     {
         var users = await _context.Users.ToListAsync();
-        var userDtos = users.Select(u => new UserDto
+        var userDtos = new List<UserDto>();
+        foreach (var u in users)
         {
-            Id = u.Id,
-            FullName = u.FullName,
-            Email = u.Email
-        }).ToList();
+            var roles = await _userManager.GetRolesAsync(u);
+            userDtos.Add(new UserDto
+            {
+                Id = u.Id,
+                FullName = u.FullName,
+                Email = u.Email,
+                Roles = roles.ToList()
+            });
+        }
 
         return new ServiceResponse<List<UserDto>>
         {
@@ -51,6 +57,7 @@ public class UserService : IUserService
             };
         }
 
+        var roles = await _userManager.GetRolesAsync(user);
         return new ServiceResponse<UserDto>
         {
             Success = true,
@@ -58,7 +65,8 @@ public class UserService : IUserService
             {
                 Id = user.Id,
                 FullName = user.FullName,
-                Email = user.Email
+                Email = user.Email,
+                Roles = roles.ToList()
             },
             StatusCode = 200
         };

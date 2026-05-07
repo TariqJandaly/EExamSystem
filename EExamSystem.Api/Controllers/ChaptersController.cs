@@ -54,7 +54,7 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     /// <returns>The newly created ChapterDto.</returns>
     /// <response code="201">Returns the newly created chapter.</response>
     /// <response code="404">If the specified testbank does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPost("testbanks/{testbankId}/chapters")]
     [ProducesResponseType(typeof(ServiceResponse<ChapterDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -121,7 +121,7 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     /// <param name="updatedChapter">The updated chapter payload.</param>
     /// <response code="200">Successfully updated the chapter.</response>
     /// <response code="404">If the chapter does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPut("chapters/{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -144,7 +144,7 @@ public class ChaptersController(AppDbContext context) : ControllerBase
     /// <param name="id">The ID of the chapter to delete.</param>
     /// <response code="200">Successfully deleted the chapter.</response>
     /// <response code="404">If the chapter does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpDelete("chapters/{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

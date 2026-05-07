@@ -59,7 +59,7 @@ public class ExamsController(AppDbContext context) : ControllerBase
     /// <response code="201">Returns the newly scheduled exam.</response>
     /// <response code="400">If the end time is before the start time, or passing score exceeds max score.</response>
     /// <response code="404">If the specified course does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPost("courses/{courseId}/exams")]
     [ProducesResponseType(typeof(ServiceResponse<ExamDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -146,7 +146,7 @@ public class ExamsController(AppDbContext context) : ControllerBase
     /// <response code="200">Successfully updated the exam.</response>
     /// <response code="400">If the end time is before the start time, or passing score exceeds max score.</response>
     /// <response code="404">If the specified exam does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPut("exams/{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -180,7 +180,7 @@ public class ExamsController(AppDbContext context) : ControllerBase
     /// <param name="id">The ID of the exam to delete.</param>
     /// <response code="200">Successfully deleted the exam.</response>
     /// <response code="404">If the specified exam does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpDelete("exams/{id}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]

@@ -30,7 +30,7 @@ public class ExamAssignmentsController : ControllerBase
     /// <response code="200">If the exam was successfully assigned.</response>
     /// <response code="400">If the exam and section belong to different courses, or if already assigned.</response>
     /// <response code="404">If the exam or section does not exist.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpPost("exams/{examId}/sections/{sectionId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
@@ -57,7 +57,7 @@ public class ExamAssignmentsController : ControllerBase
     /// <param name="sectionId">The ID of the section.</param>
     /// <response code="200">If the assignment was successfully revoked.</response>
     /// <response code="404">If the exam, section, or specific assignment was not found.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpDelete("exams/{examId}/sections/{sectionId}")]
     [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
@@ -77,7 +77,7 @@ public class ExamAssignmentsController : ControllerBase
     /// <param name="examId">The ID of the exam.</param>
     /// <response code="200">Returns the list of assigned sections.</response>
     /// <response code="404">If the exam is not found.</response>
-    [Authorize(Roles = "Instructor,Admin")]
+    [Authorize(Roles = "INSTRUCTOR,ADMIN")]
     [HttpGet("exams/{examId}/sections")]
     [ProducesResponseType(typeof(ServiceResponse<IEnumerable<SectionDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
