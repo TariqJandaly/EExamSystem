@@ -1,19 +1,22 @@
+
+
 using EExamSystem.Api.Interfaces;
-using EExamSystem.Shared.DTOs;
 using EExamSystem.Shared.DTOs.Testbanks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using EExamSystem.Shared.DTOs;
 
 namespace EExamSystem.Api.Controllers;
 
 /// <summary>
-/// Manages testbanks — course-level question repositories used as the source pool for exam questions.
+/// Controller for managing testbanks, which are collections of exam questions associated with specific courses.
 /// </summary>
 [Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
 public class TestbankController : ControllerBase
 {
+
     private readonly ITestbankService _testbankService;
 
     public TestbankController(ITestbankService testbankService)
@@ -22,20 +25,16 @@ public class TestbankController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves a list of all testbanks in the system. Restricted to Chair, Admin, and Instructor roles.
+    /// Retrieves a list of all testbanks. Accessible to users with Admin or Instructor roles.
     /// </summary>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing a list of <see cref="TestbankDto"/>.</returns>
-    /// <response code="200">Successfully retrieved the full testbank list.</response>
-    /// <response code="400">
-    /// The request could not be processed. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>FetchFailed</c> – An unexpected error occurred while retrieving testbanks.</item>
-    /// </list>
-    /// </response>
+    /// <returns>A service response containing the list of testbanks or an error message.</returns>
+    /// <response code="200">Returns the list of testbanks if the request is successful.</response>
+    /// <response code="400">Returns an error message if the request fails.</response>
     [HttpGet]
-    [Authorize(Roles = "CHAIR,ADMIN,INSTRUCTOR")]
+    [Authorize(Roles = "Chair,Admin,Instructor")]
     [ProducesResponseType(typeof(ServiceResponse<List<TestbankDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAllTestbanks()
     {
         var result = await _testbankService.GetAllTestbanksAsync();
@@ -43,46 +42,32 @@ public class TestbankController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves a specific testbank by its ID. Restricted to Chair, Admin, Instructor, and Student roles.
+    /// Retrieves a testbank by its ID. Accessible to users with Admin or Instructor roles.
     /// </summary>
     /// <param name="id">The ID of the testbank to retrieve.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing the matching <see cref="TestbankDto"/>.</returns>
-    /// <response code="200">Successfully retrieved the testbank.</response>
-    /// <response code="404">
-    /// The testbank was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>TestbankNotFound</c> – No testbank exists with the given ID.</item>
-    /// </list>
-    /// </response>
+    /// <returns>A service response containing the testbank or an error message.</returns>
+    /// <response code="200">Returns the testbank if the request is successful.</response>
+    /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpGet("{id}")]
-    [Authorize(Roles = "CHAIR,ADMIN,INSTRUCTOR,STUDENT")]
+    [Authorize(Roles = "Chair,Admin,Instructor,Student")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetTestbank(int id)
     {
         var result = await _testbankService.GetTestbankAsync(id);
+
         return StatusCode(result.StatusCode, result);
     }
 
     /// <summary>
-    /// Creates a new testbank. Restricted to Chair and Admin roles.
+    /// Creates a new testbank with the provided details. Accessible only to users with the Admin role.
     /// </summary>
-    /// <param name="testbankCreateDto">The testbank creation payload. See <see cref="TestbankCreateDto"/>.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing the newly created <see cref="TestbankDto"/>.</returns>
-    /// <response code="201">
-    /// Testbank created successfully. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>TestbankCreatedSuccess</c> – The testbank was persisted.</item>
-    /// </list>
-    /// </response>
-    /// <response code="400">
-    /// The request payload failed validation. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>TestbankAlreadyExists</c> – A testbank with the same name or course already exists.</item>
-    /// </list>
-    /// </response>
+    /// <param name="testbankCreateDto">The details for the new testbank.</param>
+    /// <returns>A service response containing the created testbank or an error message.</returns>
+    /// <response code="200">Returns the created testbank if the request is successful.</response>
+    /// <response code="400">Returns an error message if the request fails.</response>
     [HttpPost]
-    [Authorize(Roles = "CHAIR,ADMIN")]
+    [Authorize(Roles = "Chair,Admin")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateTestbank([FromBody] TestbankCreateDto testbankCreateDto)
@@ -92,27 +77,14 @@ public class TestbankController : ControllerBase
     }
 
     /// <summary>
-    /// Permanently deletes a testbank by its ID. Restricted to Chair and Admin roles.
+    /// Deletes a testbank by its ID. Accessible only to users with the Chair or Admin roles.
     /// </summary>
-    /// <remarks>
-    /// ⚠️ <b>Warning:</b> Deleting a testbank will cascade and remove all chapters and questions within it.
-    /// </remarks>
     /// <param name="id">The ID of the testbank to delete.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing the deleted <see cref="TestbankDto"/> on success.</returns>
-    /// <response code="200">
-    /// Testbank deleted successfully. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>TestbankDeletedSuccess</c> – The testbank and all its contents were removed.</item>
-    /// </list>
-    /// </response>
-    /// <response code="404">
-    /// The testbank was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>TestbankNotFound</c> – No testbank exists with the given ID.</item>
-    /// </list>
-    /// </response>
+    /// <returns>A service response indicating the result of the operation.</returns>
+    /// <response code="200">Returns a success message if the request is successful.</response>
+    /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "CHAIR,ADMIN")]
+    [Authorize(Roles = "Chair,Admin")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteTestbank(int id)
@@ -121,38 +93,24 @@ public class TestbankController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+
     /// <summary>
-    /// Updates an existing testbank's details. Restricted to Chair, Admin, and Instructor roles.
+    /// Updates an existing testbank with the provided details. Accessible only to users with the Chair, Admin and Instructor roles.
     /// </summary>
     /// <param name="id">The ID of the testbank to update.</param>
-    /// <param name="testbankCreateDto">The updated testbank payload. See <see cref="TestbankCreateDto"/>.</param>
-    /// <returns>A <see cref="ServiceResponse{T}"/> containing the updated <see cref="TestbankDto"/>.</returns>
-    /// <response code="200">
-    /// Testbank updated successfully. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>TestbankUpdatedSuccess</c> – Changes were persisted.</item>
-    /// </list>
-    /// </response>
-    /// <response code="400">
-    /// The request payload failed validation. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>TestbankAlreadyExists</c> – The updated name conflicts with an existing testbank.</item>
-    /// </list>
-    /// </response>
-    /// <response code="404">
-    /// The testbank was not found. Possible <c>Message</c> values:
-    /// <list type="bullet">
-    ///   <item><c>TestbankNotFound</c> – No testbank exists with the given ID.</item>
-    /// </list>
-    /// </response>
+    /// <param name="testbankCreateDto">The updated details for the testbank.</param>
+    /// <returns>A service response containing the updated testbank or an error message.</returns>
+    /// <response code="200">Returns the updated testbank if the request is successful.</response>
+    /// <response code="404">Returns an error message if the testbank is not found.</response>
     [HttpPut("{id}")]
-    [Authorize(Roles = "CHAIR,ADMIN,INSTRUCTOR")]
+    [Authorize(Roles = "Chair,Admin,Instructor")]
     [ProducesResponseType(typeof(ServiceResponse<TestbankDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorServiceResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateTestbank(int id, [FromBody] TestbankCreateDto testbankCreateDto)
     {
         var result = await _testbankService.UpdateTestbankAsync(id, testbankCreateDto);
+
         return StatusCode(result.StatusCode, result);
     }
 }

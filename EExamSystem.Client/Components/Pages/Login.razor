@@ -3,63 +3,48 @@
 @layout GuestLayout
 @inject NavigationManager Navigation
 @inject LanguageService Lang
-@inject IAuthService AuthService
-@inject AuthenticationStateProvider AuthStateProvider
 @implements IDisposable
 @rendermode InteractiveServer
 
 <PageTitle>Login — EExam</PageTitle>
 
-<div class="min-h-screen flex flex-col">
+<div class="min-h-[90vh] flex items-center justify-center bg-background px-4">
+    <div class="w-full max-w-md">
 
-    <div class="flex-[2] flex items-center justify-center bg-background px-4 py-10 m-8">
-        <div class="w-full max-w-md">
+        <div class="text-center mb-8">
+            <img src="/KAU_logo.png" alt="KAU Logo" class="h-[250px] w-auto mx-auto mb-4" />
+            <h1 class="text-3xl font-bold text-primary">@Lang.T("login.welcome")</h1>
+            <p class="text-sm text-secondary mt-1">@Lang.T("login.subtitle")</p>
+        </div>
 
-            <div class="text-center mb-8">
-                <img src="/KAU_logo.png" alt="KAU Logo" class="h-[250px] w-auto mx-auto mb-4" />
-                <h1 class="text-3xl font-bold text-primary">@Lang.T("login.welcome")</h1>
-                <p class="text-sm text-secondary mt-1">@Lang.T("login.subtitle")</p>
+        <div class="bg-white rounded-2xl shadow-lg p-8 border border-brand-4">
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+                    @errorMessage
+                </div>
+            }
+
+            <div class="mb-5">
+                <label class="block text-sm font-medium text-foreground mb-1">@Lang.T("login.email")</label>
+                <input @bind="email" type="email" placeholder="@Lang.T("login.email.ph")"
+                       class="w-full px-4 py-2.5 rounded-lg border border-brand-4 bg-brand-5 text-foreground placeholder:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition" />
             </div>
 
-            <div class="bg-white rounded-2xl shadow-lg p-8 border border-brand-4">
-
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                        @errorMessage
-                    </div>
-                }
-
-                <div class="mb-5">
-                    <label class="block text-sm font-medium text-foreground mb-1">@Lang.T("login.email")</label>
-                    <input @bind="email" type="email" placeholder="@Lang.T("login.email.ph")"
-                           class="w-full px-4 py-2.5 rounded-lg border border-brand-4 bg-brand-5 text-foreground  focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition" />
-                </div>
-
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-foreground mb-1">@Lang.T("login.password")</label>
-                    <input @bind="password" type="password" placeholder="••••••••"
-                           class="w-full px-4 py-2.5 rounded-lg border border-brand-4 bg-brand-5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition" />
-                </div>
-
-                <button @onclick="HandleLogin" disabled="@isLoading"
-                        class="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
-                    @(isLoading ? Lang.T("login.loading") : Lang.T("login.submit"))
-                </button>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-foreground mb-1">@Lang.T("login.password")</label>
+                <input @bind="password" type="password" placeholder="••••••••"
+                       class="w-full px-4 py-2.5 rounded-lg border border-brand-4 bg-brand-5 text-foreground placeholder:text-primary-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition" />
             </div>
 
+            <button @onclick="HandleLogin" disabled="@isLoading"
+                    class="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary-light transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
+                @(isLoading ? Lang.T("login.loading") : Lang.T("login.submit"))
+            </button>
         </div>
-    </div>
 
-    <div class="flex-1 bg-primary flex items-center justify-center px-8 py-10 text-primary-foreground">
-        <div class="max-w-3xl text-center space-y-4">
-            <h2 class="text-xl font-semibold tracking-wide">@Lang.T("policy.title")</h2>
-            <p class="text-sm text-brand-4 leading-relaxed">@Lang.T("policy.p1")</p>
-            <p class="text-sm text-brand-4 leading-relaxed">@Lang.T("policy.p2")</p>
-            <p class="text-xs text-brand-3 mt-2">&copy; @DateTime.Now.Year @Lang.T("policy.copy")</p>
-        </div>
     </div>
-
 </div>
 
 @code {
@@ -67,6 +52,13 @@
     private string password = "";
     private string? errorMessage;
     private bool isLoading = false;
+
+    private readonly Dictionary<string, string> mockAccounts = new()
+    {
+        { "student@eexam.com",    "/exams" },
+        { "instructor@eexam.com", "/instructor" },
+        { "admin@eexam.com",      "/admin" },
+    };
 
     protected override void OnInitialized() => Lang.OnChange += Refresh;
     private void Refresh() => InvokeAsync(StateHasChanged);
@@ -82,72 +74,15 @@
 
         isLoading = true;
         errorMessage = null;
-        StateHasChanged();
+        await Task.Delay(300);
 
-        try
+        if (mockAccounts.TryGetValue(email.Trim().ToLower(), out var redirect) && password == "password")
         {
-            var result = await AuthService.LoginAsync(email.Trim(), password);
-
-            if (!result.IsSuccess)
-            {
-                errorMessage = result.Message switch
-                {
-                    "EmailOrPasswordIncorrect" => Lang.T("login.err.invalid"),
-                    "UserLockedOut"            => Lang.T("login.err.locked"),
-                    "ServerError"              => "Could not reach the server. Please try again.",
-                    _                          => result.Message
-                };
-                return;
-            }
-
-            // Parse role directly from the token to avoid a second async storage read
-            var role = GetRoleFromToken(result.Token);
-            if (role is null)
-            {
-                errorMessage = "Your account has no role assigned. Contact an administrator.";
-                await AuthService.LogoutAsync();
-                return;
-            }
-
-            Navigation.NavigateTo(role switch
-            {
-                "STUDENT"    => "/exams",
-                "INSTRUCTOR" => "/instructor",
-                "ADMIN"      => "/admin",
-                "CHAIR"      => "/admin",
-                _            => "/login"
-            });
+            Navigation.NavigateTo(redirect);
+            return;
         }
-        catch (Exception ex)
-        {
-            errorMessage = $"Login error: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
 
-    private static string? GetRoleFromToken(string token)
-    {
-        try
-        {
-            var parts = token.Split('.');
-            if (parts.Length != 3) return null;
-
-            var payload = parts[1].Replace('-', '+').Replace('_', '/');
-            payload = (payload.Length % 4) switch { 2 => payload + "==", 3 => payload + "=", _ => payload };
-
-            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payload));
-            using var doc = System.Text.Json.JsonDocument.Parse(json);
-
-            if (doc.RootElement.TryGetProperty("role", out var roleEl))
-                return roleEl.ValueKind == System.Text.Json.JsonValueKind.Array
-                    ? roleEl[0].GetString()
-                    : roleEl.GetString();
-
-            return null;
-        }
-        catch { return null; }
+        isLoading = false;
+        errorMessage = Lang.T("login.err.invalid");
     }
 }
